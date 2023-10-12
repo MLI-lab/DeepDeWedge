@@ -1,6 +1,15 @@
 import torch
 import tqdm
-from .filters import apply_fourier_mask_to_tomo
+from utils.missing_wedge import apply_fourier_mask_to_tomo
+
+
+def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):
+    joint_filter = rot_mw_mask * mw_mask
+    loss = apply_fourier_mask_to_tomo(tomo=target-model_output, mask=joint_filter, output="real").abs().pow(2).mean()
+    comp_filter = rot_mw_mask * (torch.ones_like(mw_mask) - mw_mask)
+    loss = loss + mw_weight * apply_fourier_mask_to_tomo(tomo=target-model_output, mask=comp_filter, output="real").abs().pow(2).mean()
+    return loss
+
 
 def get_avg_model_input_mean_and_var(loader, batches=None, verbose=False):
     if batches is None:
@@ -23,10 +32,3 @@ def get_avg_model_input_mean_and_var(loader, batches=None, verbose=False):
         print(f"Average model input mean: {means.mean()} (Variance over inputs: {means.var()})")
         print(f"Average model input varariance: {vars.mean()} (Variance over inputs: {vars.var()})")
     return means.mean().cpu().item(), vars.mean().cpu().item()
-
-def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):
-    joint_filter = rot_mw_mask * mw_mask
-    loss = apply_fourier_mask_to_tomo(tomo=target-model_output, mask=joint_filter, output="real").abs().pow(2).mean()
-    comp_filter = rot_mw_mask * (torch.ones_like(mw_mask) - mw_mask)
-    loss = loss + mw_weight * apply_fourier_mask_to_tomo(tomo=target-model_output, mask=comp_filter, output="real").abs().pow(2).mean()
-    return loss

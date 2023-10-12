@@ -3,6 +3,8 @@ import math
 import torch
 import random
 
+from .fourier import apply_fourier_mask_to_tomo
+
 def extract_subtomos(tomo, subtomo_size, extraction_strides=None, enlarge_subtomos_for_rotating=False, pad_before_subtomo_extraction=False):
     # TODO: refactor extraction_strides to subtomo_overlap
     if enlarge_subtomos_for_rotating:
