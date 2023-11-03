@@ -20,7 +20,7 @@ def rotate_vol_around_axis(vol, rot_angle, rot_axis, output_shape=None, order=3)
         # see https://stackoverflow.com/questions/20161175/how-can-i-use-scipy-ndimage-interpolation-affine-transform-to-rotate-an-image-ab
         c_in = 0.5 * (vol_shape - torch.ones(3)).float().numpy()  # -1 because indexing starts at 0
         offset = c_in - rot_mat@c_in
-        # Apply the rotation using affine_transform
+        # apply the rotation using affine_transform
         vol = torch.tensor(
             ndimage.affine_transform(
                 vol, 

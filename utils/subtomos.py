@@ -29,7 +29,7 @@ def extract_subtomos(tomo, subtomo_size, extraction_strides=None, enlarge_subtom
     subtomos = list(subtomos)
     return subtomos, subtomo_start_coords
 
-# this was written by chatgpt and copoilot
+# this was written with the help of chatgpt and copoilot
 def reassemble_subtomos(subtomos, subtomo_start_coords, crop_to_size=None):
     # calculate the max indices in each dimension to infer the shape of the original tomogram
     subtomo_size = subtomos[0].shape[0]
@@ -56,7 +56,7 @@ def check_subtomo_overlap(starting_index1, starting_index2, subtomo_size):
     return intersect
 
 
-# this was written by chatgpt and copoilot
+# this was written with the help of chatgpt and copoilot
 def sample_non_overlapping_subtomo_ids(subtomo_start_coords, subtomo_size, n):
     if n > len(subtomo_start_coords):
         raise ValueError("n should be less than or equal to the number of subtomos")

@@ -12,14 +12,6 @@ def get_missing_wedge_mask(grid_size, mw_angle,device="cpu"):
     alpha = torch.deg2rad(torch.tensor(float(mw_angle)))/2
     normal_left = torch.tensor([torch.sin(alpha), torch.cos(alpha)])
     normal_right = torch.tensor([torch.sin(alpha), -torch.cos(alpha)])
-    # # rotate normal vectors
-    # rot_angle = torch.deg2rad(torch.tensor(float(rot_angle)))
-    # rot_mat = torch.tensor([
-    #     [torch.cos(rot_angle), -torch.sin(rot_angle)],
-    #     [torch.sin(rot_angle), torch.cos(rot_angle)]
-    # ])
-    # normal_left = rot_mat @ normal_left
-    # normal_right = rot_mat @ normal_right
     # embed normal vectors into x-z plane
     normal_left = torch.tensor([normal_left[0], 0, normal_left[1]], device=device)
     normal_right = torch.tensor([normal_right[0], 0,  normal_right[1]], device=device)
@@ -28,7 +20,6 @@ def get_missing_wedge_mask(grid_size, mw_angle,device="cpu"):
     upper_wedge = torch.logical_or(grid.inner(normal_left) >= 0, grid.inner(normal_right) >= 0).reshape(list(grid_size))
     lower_wedge = torch.logical_or(grid.inner(normal_left) <= 0, grid.inner(normal_right) <= 0).reshape(list(grid_size))
     mw_mask = torch.logical_and(upper_wedge, lower_wedge).int()
-    # finally, mask out everyhting ourside ball that fits inside image
     return mw_mask
 
 

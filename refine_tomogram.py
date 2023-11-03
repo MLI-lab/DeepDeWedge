@@ -9,7 +9,6 @@ def clamp(vol, factor=3):
     return vol.clamp(-factor*vol.std(), factor*vol.std())
 
 def refine_tomogram(tomo, lightning_model, subtomo_size=None, extraction_strides=None, batch_size=None):
-
     if subtomo_size is None:
         subtomo_size = lightning_model.hparams.dataset_params["subtomo_size"]
     if extraction_strides is None:
@@ -29,7 +28,6 @@ def refine_tomogram(tomo, lightning_model, subtomo_size=None, extraction_strides
         enlarge_subtomos_for_rotating=False, 
         pad_before_subtomo_extraction=True
     )
-    # subtomos = get_chunks(vol, subtomo_size, overlap=subtomo_size-extraction_strides[0])
 
     subtomos = TensorDataset(torch.stack(subtomos))
     subtomo_loader = DataLoader(

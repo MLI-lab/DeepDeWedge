@@ -1,3 +1,6 @@
+"""
+This is a PyTorch re-implementation of the 3D U-Net used in the IsoNet software package, which can be found here: https://github.com/IsoNet-cryoET/IsoNet/tree/master/models/unet
+"""
 import torch
 from torch import nn
 
@@ -34,17 +37,8 @@ class Unet3D(torch.nn.Module):
         
         self.bottleneck = nn.Sequential(
             nn.Conv3d(ch, ch * 2, kernel_size=(3, 3, 3), padding=1),
-            # nn.BatchNorm3d(ch * 2),
-            # nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
-            # nn.Conv3d(ch * 2, ch * 2, kernel_size=(3, 3, 3), padding=1),
-            # nn.BatchNorm3d(ch * 2),
-            # nn.Dropout3d(drop_prob),
-            # nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(ch * 2, ch, kernel_size=(3, 3, 3), padding=1),
-            # nn.BatchNorm3d(ch),
-            # nn.Dropout3d(drop_prob),
-            # nn.LeakyReLU(negative_slope=0.05, inplace=True),
         )
 
         self.up_conv = nn.ModuleList()
@@ -54,7 +48,6 @@ class Unet3D(torch.nn.Module):
             self.up_transpose_conv.append(SpatialUpSampling(in_chans=ch, out_chans=ch//2))
             ch //= 2
         self.up_conv.append(UpConvBlock(2 * ch, ch, drop_prob))
-        # self.up_transpose_conv.append(SkipTransposeConvBlock(ch * 2, ch))
         self.final_conv = nn.Conv3d(ch, self.out_chans, kernel_size=(1, 1, 1), stride=(1, 1, 1))
 
     def normalize(self, volume: torch.Tensor) -> torch.Tensor:
@@ -75,23 +68,12 @@ class Unet3D(torch.nn.Module):
             stack.append(output)
             output = downsampler(output)
             
-            # output = F.avg_pool3d(output, kernel_size=(2, 2, 2), stride=(2, 2, 2), padding=0)
-
         output = self.bottleneck(output)
 
         # apply up-sampling layers
         for transpose_conv, conv in zip(self.up_transpose_conv, self.up_conv):
             downsample_layer = stack.pop()
             output = transpose_conv(output, cat=downsample_layer)
-            # reflect pad on the right/botton if needed to handle odd input dimensions
-            # padding = [0, 0, 0, 0]
-            # if output.shape[-1] != downsample_layer.shape[-1]:
-            #     padding[1] = 1  # padding right
-            # if output.shape[-2] != downsample_layer.shape[-2]:
-            #     padding[3] = 1  # padding bottom
-            # if torch.sum(torch.tensor(padding)) != 0:
-            #     output = F.pad(output, padding, "reflect")
-            # output = torch.cat([output, downsample_layer], dim=1)
             output = conv(output)
 
         output = self.final_conv(output)
@@ -167,22 +149,17 @@ class SpatialDownSampling(nn.Module):
         return self.layers(volume)
 
 
-# models.unet.blocks.decoder_block
 class SpatialUpSampling(nn.Module):
     def __init__(self, in_chans: int, out_chans: int, drop_prob=0.):
         super().__init__()
         self.tconv = nn.ConvTranspose3d(
             in_chans, out_chans, kernel_size=(3,3,3), stride=(2,2,2), padding=1, output_padding=1
         )
-        # self.norm = nn.BatchNorm3d(chans)
-        # self.droput = nn.Dropout(drop_prob)
         self.activation = nn.LeakyReLU(negative_slope=0.05, inplace=True)
 
 
     def forward(self, volume: torch.Tensor, cat: torch.Tensor) -> torch.Tensor:
         output = self.tconv(volume)
-        # output = self.norm(output)
-        # output = self.droput(output)
         output = torch.cat([output, cat], dim=1)
         output = self.activation(output)
         return output
