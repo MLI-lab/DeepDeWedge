@@ -1,18 +1,26 @@
-#%%
+# %%
 import torch
 import tqdm
 import numpy as np
 from utils.subtomos import extract_subtomos, reassemble_subtomos
 from torch.utils.data import DataLoader, TensorDataset
 
-def clamp(vol, factor=3):
-    return vol.clamp(-factor*vol.std(), factor*vol.std())
 
-def refine_tomogram(tomo, lightning_model, subtomo_size=None, extraction_strides=None, batch_size=None):
+def clamp(vol, factor=3):
+    return vol.clamp(-factor * vol.std(), factor * vol.std())
+
+
+def refine_tomogram(
+    tomo,
+    lightning_model,
+    subtomo_size=None,
+    subtomo_extraction_strides=None,
+    batch_size=None,
+):
     if subtomo_size is None:
         subtomo_size = lightning_model.hparams.dataset_params["subtomo_size"]
-    if extraction_strides is None:
-        extraction_strides = 3*[subtomo_size]
+    if subtomo_extraction_strides is None:
+        subtomo_extraction_strides = 3 * [subtomo_size]
     if batch_size is None:
         batch_size = lightning_model.hparams.dataloader_params["batch_size"]
 
@@ -22,19 +30,19 @@ def refine_tomogram(tomo, lightning_model, subtomo_size=None, extraction_strides
     tomo *= lightning_model.unet.normalization_scale.to(tomo.device)
 
     subtomos, subtomo_start_coords = extract_subtomos(
-        tomo=tomo.cpu(), 
-        subtomo_size=subtomo_size, 
-        extraction_strides=extraction_strides, 
-        enlarge_subtomos_for_rotating=False, 
-        pad_before_subtomo_extraction=True
+        tomo=tomo.cpu(),
+        subtomo_size=subtomo_size,
+        subtomo_extraction_strides=subtomo_extraction_strides,
+        enlarge_subtomos_for_rotating=False,
+        pad_before_subtomo_extraction=True,
     )
 
     subtomos = TensorDataset(torch.stack(subtomos))
     subtomo_loader = DataLoader(
-        subtomos, 
-        batch_size=batch_size, 
-        shuffle=False, 
-        num_workers=0, 
+        subtomos,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=0,
     )
 
     with torch.no_grad():

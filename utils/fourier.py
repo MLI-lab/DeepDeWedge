@@ -20,7 +20,7 @@ def apply_fourier_mask_to_tomo(tomo, mask, output="real"):
         return vol_filt.real
     elif output == "complex":
         return vol_filt
-    
+
 
 def get_3d_fft_freqs_on_grid(grid_size, device="cpu"):
     z = torch.fft.fftshift(torch.fft.fftfreq(int(grid_size[0]), device=device))

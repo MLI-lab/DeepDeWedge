@@ -10,6 +10,7 @@ def load_mrc_data(mrc_file):
             data = torch.from_numpy(mrc.data.astype(float))
     return data
 
+
 def save_mrc_data(data, mrc_file):
     with mrcfile.new(mrc_file, overwrite=True) as mrc:
         mrc.set_data(data.numpy())
