@@ -65,13 +65,11 @@ def reassemble_subtomos(subtomos, subtomo_start_coords, crop_to_size=None):
         max(start_idx[i] + subtomo_size for start_idx in subtomo_start_coords)
         for i in range(3)
     ]
-    reconstructed_vol = torch.zeros(
-        max_idx, dtype=torch.float32, device=subtomos[0].device
-    )
-    count_vol = torch.zeros_like(reconstructed_vol)
+    out_vol = torch.zeros(max_idx, dtype=torch.float32, device=subtomos[0].device)
+    count_vol = torch.zeros_like(out_vol)
     for subtomo, start_idx in zip(subtomos, subtomo_start_coords):
         end_idx = [start + subtomo_size for start in start_idx]
-        reconstructed_vol[
+        out_vol[
             start_idx[0] : end_idx[0],
             start_idx[1] : end_idx[1],
             start_idx[2] : end_idx[2],
@@ -84,37 +82,46 @@ def reassemble_subtomos(subtomos, subtomo_start_coords, crop_to_size=None):
     # avoid division by zero by replacing zero counts with ones
     count_vol[count_vol == 0] = 1
     # average the overlapping regions by dividing the accumulated values by their count
-    reconstructed_vol /= count_vol
+    out_vol /= count_vol
     if crop_to_size is not None:
-        reconstructed_vol = reconstructed_vol[
-            : crop_to_size[0], : crop_to_size[1], : crop_to_size[2]
-        ]
-    return reconstructed_vol
+        out_vol = out_vol[: crop_to_size[0], : crop_to_size[1], : crop_to_size[2]]
+    return out_vol
 
 
-def check_subtomo_overlap(starting_index1, starting_index2, subtomo_size):
-    # get cube vertices
-    vertices1 = get_cube_vertices(starting_index1, subtomo_size)
-    vertices2 = get_cube_vertices(starting_index2, subtomo_size)
-    intersect = check_cube_overlap(vertices1, vertices2)
-    return intersect
+def try_to_sample_non_overlapping_subtomo_ids(
+    subtomo_start_coords, subtomo_size, target_sample_size, max_tries=1, verbose=True
+):
+    n = 0
+    most_non_overlapping_subtomo_ids = []
+    while n < max_tries:
+        non_overlapping_subtomo_ids = try_to_sample_non_overlapping_subtomo_ids_(
+            subtomo_start_coords, subtomo_size, target_sample_size
+        )
+        if len(non_overlapping_subtomo_ids) == target_sample_size:
+            return non_overlapping_subtomo_ids
+        elif len(non_overlapping_subtomo_ids) > len(most_non_overlapping_subtomo_ids):
+            most_non_overlapping_subtomo_ids = non_overlapping_subtomo_ids
+            n += 1
+    if verbose:
+        print(
+            f"Warning: Could not sample {target_sample_size} non-overlapping subtomos. "
+        )
+    return most_non_overlapping_subtomo_ids
 
 
 # this was written with the help of chatgpt and copoilot
-def sample_non_overlapping_subtomo_ids(subtomo_start_coords, subtomo_size, n):
-    if n > len(subtomo_start_coords):
+def try_to_sample_non_overlapping_subtomo_ids_(
+    subtomo_start_coords, subtomo_size, target_sample_size
+):
+    if target_sample_size > len(subtomo_start_coords):
         raise ValueError("n should be less than or equal to the number of subtomos")
 
     candidate_ids = list(range(len(subtomo_start_coords)))
     non_overlapping_subtomo_ids = []
 
     n_rejected = 0
-    while len(non_overlapping_subtomo_ids) < n:
+    while len(non_overlapping_subtomo_ids) < target_sample_size:
         if len(candidate_ids) == 0:
-            print(
-                f"Warning: Could not find {n} non-overlapping subtomos (probably for the construction of the validation dataset)."
-                f"Continuing with {len(non_overlapping_subtomo_ids)} non-overlapping subtomos."
-            )
             return non_overlapping_subtomo_ids
         idx = random.choice(candidate_ids)
         starting_index = subtomo_start_coords[idx]
@@ -134,6 +141,14 @@ def sample_non_overlapping_subtomo_ids(subtomo_start_coords, subtomo_size, n):
         # remove the sampled subtomogram from the list of indices to sample from
         candidate_ids.remove(idx)
     return non_overlapping_subtomo_ids
+
+
+def check_subtomo_overlap(starting_index1, starting_index2, subtomo_size):
+    # get cube vertices
+    vertices1 = get_cube_vertices(starting_index1, subtomo_size)
+    vertices2 = get_cube_vertices(starting_index2, subtomo_size)
+    intersect = check_cube_overlap(vertices1, vertices2)
+    return intersect
 
 
 def get_cube_vertices(starting_point, cube_size):

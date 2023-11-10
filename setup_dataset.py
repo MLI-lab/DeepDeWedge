@@ -3,7 +3,7 @@ import os
 import math
 
 from utils.mrctools import load_mrc_data, save_mrc_data
-from utils.subtomos import extract_subtomos, sample_non_overlapping_subtomo_ids
+from utils.subtomos import extract_subtomos, try_to_sample_non_overlapping_subtomo_ids
 from utils.data import SubtomoDataset
 
 
@@ -45,11 +45,18 @@ def setup_fitting_and_val_dataset(
             enlarge_subtomos_for_rotating=rotate_subtomos,
             pad_before_subtomo_extraction=pad_before_subtomo_extraction,
         )
-        val_ids = sample_non_overlapping_subtomo_ids(
+        val_ids = try_to_sample_non_overlapping_subtomo_ids(
             subtomo_start_coords=start_coords,
             subtomo_size=subtomo_size,
-            n=math.floor(len(subtomos0) * val_fraction),
+            target_sample_size=math.floor(len(subtomos0) * val_fraction),
+            max_tries=3,
+            verbose=False,
         )
+        if len(val_ids) < math.floor(len(subtomos0) * val_fraction):
+            print(
+                f"WARNING: Could not sample {round(val_fraction*100, 2)}% of all subtomos for validation due to overlap with the fitting data. "
+                f"Continuing with {round((len(val_ids)/len(subtomos0))*100, 2)}% (i.e. {len(val_ids)}) validation subtomos."
+            )
         fitting_ids = [k for k in range(len(subtomos0)) if k not in val_ids]
 
         for idx in fitting_ids:

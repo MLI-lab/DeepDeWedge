@@ -32,7 +32,7 @@ class Unet3D(torch.nn.Module):
             torch.tensor(normalization_scale), requires_grad=False
         )
         self.__init_layers__()
-    
+
     def __init_layers__(self):
         self.down_blocks = nn.ModuleList(
             [DownConvBlock(self.in_chans, self.chans, self.drop_prob)]
@@ -45,24 +45,18 @@ class Unet3D(torch.nn.Module):
             self.down_samplers.append(SpatialDownSampling(ch * 2))
             ch *= 2
 
-
         self.bottleneck = nn.Sequential(
             nn.Conv3d(ch, ch * 2, kernel_size=(3, 3, 3), padding=1),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(ch * 2, ch, kernel_size=(3, 3, 3), padding=1),
         )
 
-
         self.up_blocks = nn.ModuleList()
-        self.upsamplers = nn.ModuleList(
-            [SpatialUpSampling(in_chans=ch, out_chans=ch)]
-        )
+        self.upsamplers = nn.ModuleList([SpatialUpSampling(in_chans=ch, out_chans=ch)])
 
         for _ in range(self.num_downsample_layers - 1):
             self.up_blocks.append(UpConvBlock(2 * ch, ch, self.drop_prob))
-            self.upsamplers.append(
-                SpatialUpSampling(in_chans=ch, out_chans=ch // 2)
-            )
+            self.upsamplers.append(SpatialUpSampling(in_chans=ch, out_chans=ch // 2))
             ch //= 2
         self.up_blocks.append(UpConvBlock(2 * ch, ch, self.drop_prob))
 
