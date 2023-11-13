@@ -8,7 +8,7 @@ All you have to do is to install the minimal software requirements via
 pip install -r requirements.txt
 ```
 ## Tutorial
-To get started with DeepDeWedge, we strongly encourage you to have a look at our tutorial in `tutorial.ipynb`. See you there!
+To get started with DeepDeWedge, we strongly encourage you to have a look at our tutorial in `tutorial.ipynb`. There, we reconstruct the flagella of Chlamydomonas Reinhardtii based on data from the Tomo110 dataset, which was used in the tutorial for the related [CryoCARE](https://github.com/juglab/cryoCARE_T2T) denoising method.
 
 
 ## Contact
