@@ -1,5 +1,5 @@
 import torch
-from utils.missing_wedge import apply_fourier_mask_to_tomo
+from .utils.missing_wedge import apply_fourier_mask_to_tomo
 
 
 def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):

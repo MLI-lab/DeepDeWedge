@@ -2,7 +2,7 @@
 import torch
 import tqdm
 import numpy as np
-from utils.subtomos import extract_subtomos, reassemble_subtomos
+from .utils.subtomos import extract_subtomos, reassemble_subtomos
 from torch.utils.data import DataLoader, TensorDataset
 
 

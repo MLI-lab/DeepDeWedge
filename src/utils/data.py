@@ -5,9 +5,9 @@ import torch
 from torch.utils.data import Dataset
 from scipy import spatial
 
-from utils.mrctools import load_mrc_data
-from utils.rotation import rotate_vol_around_axis
-from utils.missing_wedge import (
+from .mrctools import load_mrc_data
+from .rotation import rotate_vol_around_axis
+from .missing_wedge import (
     get_missing_wedge_mask,
     get_rotated_missing_wedge_mask,
     apply_fourier_mask_to_tomo,

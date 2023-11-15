@@ -2,9 +2,9 @@
 import os
 import math
 
-from utils.mrctools import load_mrc_data, save_mrc_data
-from utils.subtomos import extract_subtomos, try_to_sample_non_overlapping_subtomo_ids
-from utils.data import SubtomoDataset
+from .utils.mrctools import load_mrc_data, save_mrc_data
+from .utils.subtomos import extract_subtomos, try_to_sample_non_overlapping_subtomo_ids
+from .utils.data import SubtomoDataset
 
 
 # %%
