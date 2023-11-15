@@ -1,6 +1,5 @@
 
 torch==1.12.1+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
-torchsummary==1.5.1
 mrcfile
 matplotlib
 pandas
