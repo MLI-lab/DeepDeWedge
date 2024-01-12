@@ -7,7 +7,7 @@ The first step is to clone this repository, e.g. via
 ```
 git clone https://github.com/MLI-lab/DeepDeWedge
 ```
-W recommend to continue the installation in a fresh `Python 3.7.13` virtual environment. To create such an environment, you can for example use Anaconda as follows
+We recommend to continue the installation in a fresh `Python 3.7.13` environment. To create such an environment, you can for example use [Anaconda](https://www.anaconda.com/download):
 ```
 conda create -n DDW python=3.7.13
 conda activate DDW
