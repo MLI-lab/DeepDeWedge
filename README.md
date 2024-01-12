@@ -7,21 +7,21 @@ The first step is to clone this repository, e.g. via
 ```
 git clone https://github.com/MLI-lab/DeepDeWedge
 ```
-We recommend to continue the installation in a fresh `Python 3.7.13` virtual environment. To create such an environment, you can for example use Anaconda as follows
+W recommend to continue the installation in a fresh `Python 3.7.13` virtual environment. To create such an environment, you can for example use Anaconda as follows
 ```
 conda create -n DDW python=3.7.13
 conda activate DDW
 ```
-Next, you have to install a version of `PyTorch` that is compatible with your `CUDA` version. DeepDeWedge was developed using `Pytorch 1.12.1` and `CUDA 11.3`. The corresponding install command is
+Next, you have to install a version of `PyTorch` that is compatible with your `CUDA` version. DeepDeWedge was developed using `Pytorch 1.12.1` and `CUDA 11.3`, so we recommend this combination. The corresponding `conda` install command is
 ```
-pip install torch==1.12.1+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+conda install pytorch==1.12.1 cudatoolkit=11.3 -c pytorch
 ```
+**Note:** You can find a list of all `PyTorch` versions and the compatible `CUDA` versions [here](https://pytorch.org/get-started/previous-versions/). 
 
 The remaining requirements can be istalled via
 ```
 pip install -r requirements.txt
 ```
-
 
 ## Tutorial
 To get started with DeepDeWedge, we strongly encourage you to have a look at our tutorial in `tutorial.ipynb`. There, we reconstruct the flagella of Chlamydomonas Reinhardtii based on data from the Tomo110 dataset, which was used in the tutorial for the related [CryoCARE](https://github.com/juglab/cryoCARE_T2T) denoising method.
