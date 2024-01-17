@@ -39,7 +39,8 @@ If you have any questions, or if you think you found a bug in the code, please d
   author  = {Wiedemann, Simon and Heckel, Reinhard},
   journal = {arXiv preprint arXiv:2311.05539},
   year    = {2023}
-}```
+}
+```
 
 ## License
 All files are provided under the terms of the BSD 2-Clause license.
