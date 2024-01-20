@@ -1,9 +1,9 @@
 import math
 import torch
 from scipy import ndimage, spatial
+import random
 
-
-def rotate_vol_around_axis(vol, rot_angle, rot_axis, output_shape=None, order=3):
+def rotate_vol_around_axis(vol, rot_angle, rot_axis, index=None, output_shape=None, order=3):
     vol_shape = torch.tensor(vol.shape[-3:])
     if output_shape is None:
         output_shape = vol_shape
@@ -36,3 +36,20 @@ def rotate_vol_around_axis(vol, rot_angle, rot_axis, output_shape=None, order=3)
         crop_offset[2] : crop_offset[2] + output_shape[2],
     ]
     return vol
+
+ISONET_MW_ROTATION_LIST = [
+    (((0,1),1),((1,2),0)), (((0,1),1),((1,2),1)), (((0,2),1),((1,2),0)), (((0,2),1),((1,2),1)), 
+    (((0,1),1),((1,2),2)), (((0,1),1),((1,2),3)), (((0,2),1),((1,2),2)), (((0,2),1),((1,2),3)), 
+    (((0,1),3),((1,2),0)), (((0,1),3),((1,2),1)), (((0,2),3),((1,2),0)), (((0,2),1),((1,2),1)), 
+    (((0,1),3),((1,2),2)), (((0,1),3),((1,2),3)), (((0,2),3),((1,2),2)), (((0,2),1),((1,2),3)),
+    (((1,2),1),((0,2),0)), (((1,2),1),((0,2),2)), (((1,2),3),((0,2),0)), (((1,2),3),((0,2),2))
+]
+
+def rotate_vol_around_axis(vol, rot_angle, rot_axis, index=None, output_shape=None, order=3):
+    if index is not None:
+        rot = ISONET_MW_ROTATION_LIST[index]
+    else:    
+        rot = random.choice(ISONET_MW_ROTATION_LIST)
+    vol_rot = torch.rot90(vol, k=rot[0][1], dims=rot[0][0])
+    vol_rot = torch.rot90(vol_rot, k=rot[1][1], dims=rot[1][0])
+    return vol_rot

@@ -34,12 +34,12 @@ def get_missing_wedge_mask(grid_size, mw_angle, device="cpu"):
 
 
 def get_rotated_missing_wedge_mask(
-    grid_size, mw_angle, rot_axis, rot_angle, device="cpu"
+    grid_size, mw_angle, rot_axis, rot_angle, index=None, device="cpu"
 ):
     grid_size = torch.tensor(grid_size)
     # enlarge grid size such that rotated grid fits inside
-    adjusted_grid_size = (torch.ceil(math.sqrt(2) * grid_size) / 2.0) * 2
-    mw_mask = get_missing_wedge_mask(grid_size=adjusted_grid_size, mw_angle=mw_angle)
+    # adjusted_grid_size = (torch.ceil(math.sqrt(2) * grid_size) / 2.0) * 2
+    mw_mask = get_missing_wedge_mask(grid_size=grid_size, mw_angle=mw_angle)
     mw_mask = (
         rotate_vol_around_axis(
             vol=mw_mask,
@@ -47,6 +47,7 @@ def get_rotated_missing_wedge_mask(
             rot_axis=rot_axis,
             output_shape=grid_size,
             order=3,
+            index=index
         )
         .float()
         .to(device)

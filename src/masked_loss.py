@@ -6,7 +6,7 @@ def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):
     outside_mw_mask = rot_mw_mask * mw_mask
     outside_mw_loss = (
         apply_fourier_mask_to_tomo(
-            tomo=target - model_output, mask=outside_mw_mask, output="real"
+            tomo=target - model_output, mask=outside_mw_mask, output="complex"
         )
         .abs()
         .pow(2)
@@ -15,11 +15,11 @@ def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):
     inside_mw_mask = rot_mw_mask * (torch.ones_like(mw_mask) - mw_mask)
     inside_mw_loss = (
         apply_fourier_mask_to_tomo(
-            tomo=target - model_output, mask=inside_mw_mask, output="real"
+            tomo=target - model_output, mask=inside_mw_mask, output="complex"
         )
         .abs()
         .pow(2)
         .mean()
     )
     loss = outside_mw_loss + mw_weight * inside_mw_loss
-    return loss
+    return loss, inside_mw_loss

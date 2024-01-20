@@ -72,6 +72,10 @@ class Unet3D(torch.nn.Module):
 
     def forward(self, volume: torch.Tensor) -> torch.Tensor:
         volume = self.normalize(volume)
+        # mean = volume.mean(dim=(-1,-2,-3), keepdim=True)
+        # std = volume.std(dim=(-1,-2,-3), keepdim=True)
+
+        # volume = (volume - mean) / std
 
         stack = []
         output = volume
@@ -92,6 +96,8 @@ class Unet3D(torch.nn.Module):
         output = self.final_conv(output)
         if self.residual:
             output = output + volume
+
+        # output = output * std + mean
 
         output = self.denormalize(output)
         return output

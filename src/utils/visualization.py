@@ -21,7 +21,7 @@ def plot_tomo_slices(tomo, domain="image", figsize=(7, 5)):
         ax[2].imshow(tomo[:, :, half[2]], cmap="gray")
     elif domain == "fourier":
         # plot in Fourier domain
-        tomo_ft = fft_3d(tomo).abs()
+        tomo_ft = fft_3d(tomo).abs().log()
         ax[0].imshow(tomo_ft[half[0], :, :], cmap="gray")
         ax[1].imshow(tomo_ft[:, half[1], :], cmap="gray")
         ax[2].imshow(tomo_ft[:, :, half[2]].T, cmap="gray")

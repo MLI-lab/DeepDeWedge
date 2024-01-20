@@ -12,6 +12,7 @@ from .missing_wedge import (
     get_rotated_missing_wedge_mask,
     apply_fourier_mask_to_tomo,
 )
+import random
 
 
 BASE_SEED = 888
@@ -45,7 +46,8 @@ class SubtomoDataset(Dataset):
         )
         rot_axis = rotvec / rotvec.norm()
         rot_angle = torch.rad2deg(rotvec.norm())
-        return rot_axis, rot_angle
+        index = index % 20 if self.deterministic_rotations else random.choice(range(20))
+        return rot_axis, rot_angle, index
 
     def __len__(self):
         return len(os.listdir(f"{self.subtomo_dir}/subtomo0"))
@@ -54,7 +56,7 @@ class SubtomoDataset(Dataset):
         subtomo0, subtomo1 = self._load_subtomo_pair(index)
         # rotate subtomos
         if self.rotate_subtomos:
-            rot_axis, rot_angle = self._sample_rot_axis_and_angle(index)
+            rot_axis, rot_angle, i = self._sample_rot_axis_and_angle(index)
         else:
             rot_angle, rot_axis = 0, torch.tensor([1.0, 0.0, 0.0])
         subtomo0 = rotate_vol_around_axis(
@@ -62,12 +64,14 @@ class SubtomoDataset(Dataset):
             rot_angle=rot_angle,
             rot_axis=rot_axis,
             output_shape=3 * [self.crop_subtomos_to_size],
+            index=i
         )
         subtomo1 = rotate_vol_around_axis(
             subtomo1,
             rot_angle=rot_angle,
             rot_axis=rot_axis,
             output_shape=3 * [self.crop_subtomos_to_size],
+            index=i
         )
         # missing wedge masks
         rot_mw_mask = get_rotated_missing_wedge_mask(
@@ -76,6 +80,7 @@ class SubtomoDataset(Dataset):
             rot_axis=rot_axis,
             rot_angle=rot_angle,
             device=subtomo0.device,
+            index=i
         )
         mw_mask = get_missing_wedge_mask(
             grid_size=3 * [self.crop_subtomos_to_size],
@@ -84,6 +89,7 @@ class SubtomoDataset(Dataset):
         )
         model_input = apply_fourier_mask_to_tomo(subtomo0, mw_mask)
         item = {
+            "subtomo0": subtomo0,
             "model_input": model_input,
             "model_target": subtomo1,
             "mw_mask": mw_mask,

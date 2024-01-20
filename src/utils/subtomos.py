@@ -99,7 +99,7 @@ def try_to_sample_non_overlapping_subtomo_ids(
         )
         if len(non_overlapping_subtomo_ids) == target_sample_size:
             return non_overlapping_subtomo_ids
-        elif len(non_overlapping_subtomo_ids) > len(most_non_overlapping_subtomo_ids):
+        elif len(non_overlapping_subtomo_ids) >= len(most_non_overlapping_subtomo_ids):
             most_non_overlapping_subtomo_ids = non_overlapping_subtomo_ids
             n += 1
     if verbose:
