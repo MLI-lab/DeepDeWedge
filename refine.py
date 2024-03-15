@@ -23,50 +23,57 @@ def clamp(vol, k=3):
 ckpt = "/media/ssd0/simon/cryo_et_recontruction/tensorboard_logs/legionella/bin3_lam=5_chans=16/checkpoints/val_loss/epoch=19110-val_loss=0.59821.ckpt"
 lit_unet = LitUnet3D.load_from_checkpoint(ckpt).to("cuda:3")
 
-tomo_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/single_tomo/Legionella_crop_bin3.mrc"
-# tomo_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/tomos/TS_20231110_LegionellaMutV_2_crop_bin3.mrc"
-tomo_full = load_mrc_data(tomo_file)
+tomo_full_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/single_tomo/Legionella_even_crop_bin3.mrc"
+# tomo_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/tomos/TS_20231110_LegionellaMutV_3_crop_bin3.mrc"
+# tomo_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/tomos/TS_20231110_LegionellaMutV_3_even_crop_bin3.mrc"
+tomo_full = load_mrc_data(tomo_full_file)
+
+tomo_even_file = "/media/hdd3/simon/cryo_et_reconstruction/legionella/single_tomo/Legionella_crop_bin3.mrc"
+tomo_even = load_mrc_data(tomo_even_file)
 # tomo_full = load_mrc_data("/workspaces/DeepDeWedge/tutorial_data/tomo_full.mrc")
 # tomo_full = load_mrc_data("/media/hdd3/simon/cryo_et_reconstruction/legionella/tomos/TS_20231110_LegionellaMutV_2_crop.mrc")
 # tomo_full = torch.nn.functional.avg_pool3d(tomo_full.unsqueeze(0), 3, 3).squeeze()
 # tomo_full = tomo_full[150:350,:,:]
 # tomo_full = apply_fourier_mask_to_tomo(tomo_full, mask=get_missing_wedge_mask(grid_size=tomo_full.shape, mw_angle=60))
 
-tomo_full -= tomo_full.mean()
-tomo_full /= tomo_full.std()
 
 plot_tomo_slices(tomo_full, figsize=(10, 15))
 #%%
-subtomo_size = 96
-subtomo_extraction_stirdes = [64,64,64]
+subtomo_size = 88
+subtomo_extraction_stirdes = [66,66,66]
+
 tomo_ref = refine_tomogram(
+    tomo=tomo_even.to(lit_unet.device),
+    lightning_model=lit_unet,
+    subtomo_size=subtomo_size,  # this should be the same as the subtomo_size used for the model fitting
+    subtomo_extraction_strides=subtomo_extraction_stirdes,  # this can differ from the subtomo_extraction_strides used for the model fitting; reduce the stride lengths if you observe artifacts in the refined tomogram
+    add_wedge=True,
+    num_repetitions=32,
+    batch_size=2,
+)
+tomo_ref = tomo_ref.cpu()
+
+
+tomo_ref_shift = refine_tomogram(
     tomo=tomo_full.to(lit_unet.device),
     lightning_model=lit_unet,
     subtomo_size=subtomo_size,  # this should be the same as the subtomo_size used for the model fitting
     subtomo_extraction_strides=subtomo_extraction_stirdes,  # this can differ from the subtomo_extraction_strides used for the model fitting; reduce the stride lengths if you observe artifacts in the refined tomogram
+    add_wedge=False,
+    num_repetitions=1,
     batch_size=2,
 )
-tomo_ref = tomo_ref.cpu()
-plot_tomo_slices(clamp(tomo_ref), figsize=(10, 15)
-).show()
+tomo_ref_shift = tomo_ref_shift.cpu()# plot_tomo_slices(clamp(tomo_ref), figsize=(10, 15)
+# ).show()
 
-tomo_ref -= tomo_ref.mean()
-tomo_ref /= tomo_ref.std()
-
-mw_mask = get_missing_wedge_mask(tomo_ref.shape, 60, device=tomo_ref.device)
-tomo_ref_mw = apply_fourier_mask_to_tomo(tomo_ref, mw_mask)
-
-tomo_ref_ref = refine_tomogram(
-    tomo=tomo_ref_mw.to(lit_unet.device),
-    lightning_model=lit_unet,
-    subtomo_size=subtomo_size,  # this should be the same as the subtomo_size used for the model fitting
-    subtomo_extraction_strides=subtomo_extraction_stirdes,  # this can differ from the subtomo_extraction_strides used for the model fitting; reduce the stride lengths if you observe artifacts in the refined tomogram
-    batch_size=2,
-)
-tomo_ref_ref = tomo_ref_ref.cpu()
-plot_tomo_slices(clamp(tomo_ref_ref), figsize=(10, 15)
-).show()
-
+#%%
+sl = -40
+plt.imshow(clamp(tomo_full[:,sl,:]))
+plt.show()
+plt.imshow(clamp(tomo_ref[:,sl,:]))
+plt.show()
+plt.imshow(clamp(tomo_ref_shift[:,sl,:]))
+plt.show()
 
 #%%
 chunk = tomo_ref#[:400,200:600,200:600]
