@@ -26,8 +26,8 @@ def refine_tomogram(
 
     tomo -= tomo.mean()
     tomo /= tomo.std()
-    tomo += lightning_model.unet.normalization_loc.to(tomo.device)
     tomo *= lightning_model.unet.normalization_scale.to(tomo.device)
+    tomo += lightning_model.unet.normalization_loc.to(tomo.device)
 
     subtomos, subtomo_start_coords = extract_subtomos(
         tomo=tomo.cpu(),
