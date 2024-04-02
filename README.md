@@ -1,30 +1,47 @@
 # DeepDeWedge
 
-This repository contains an implementation of the DeepDeWedge method as described in our manuscript ["A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography"](https://arxiv.org/abs/2311.05539). 
+This repository contains an implementation of the DeepDeWedge method as described in our manuscript ["A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography"](https://arxiv.org/abs/2311.05539). Our implementation comes as a Python package with an accompanying command line interface.
 
 ## Installation
 The first step is to clone this repository, e.g. via
 ```
 git clone https://github.com/MLI-lab/DeepDeWedge
 ```
-We recommend to continue the installation in a fresh `Python 3.7.13` environment. To create such an environment, you can for example use [Anaconda](https://www.anaconda.com/download):
+We recommend to continue the installation in a fresh `Python 3.10.13` environment. To create such an environment, you can for example use [Anaconda](https://www.anaconda.com/download):
 ```
-conda create -n DDW python=3.7.13
-conda activate DDW
+conda create -n ddw_env python=3.10.13
+conda activate ddw_env
 ```
-Next, you have to install a version of `PyTorch` that is compatible with your `CUDA` version. DeepDeWedge was developed using `Pytorch 1.12.1` and `CUDA 11.3`, so we recommend this combination. The corresponding `conda` install command is
+Next, you have to install a version of `PyTorch` that is compatible with your `CUDA` version. DeepDeWedge was developed using `Pytorch 2.2.0` and `CUDA 11.8`, so we recommend this combination. The corresponding `conda` install command is
 ```
-conda install pytorch==1.12.1 cudatoolkit=11.3 -c pytorch
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 ```
-**Note:** You can find a list of all `PyTorch` versions and the compatible `CUDA` versions [here](https://pytorch.org/get-started/previous-versions/). 
-
-The remaining requirements can be istalled via
+You can find a list of all `PyTorch` versions and the compatible `CUDA` versions [here](https://pytorch.org/get-started/previous-versions/). The remaining requirements can be istalled via
 ```
 pip install -r requirements.txt
 ```
+Finally, you can, install the DeepDeWedge package via
+```
+pip install -e .
+``` 
+The installation should not take more than a few minutes in total. Upon successful installation, running the command
+```
+ddw --help
+```
+should display a help message for the DeepDeWedge command line interface.
+
+## Usage
+The DeepDeWedge command line interface provides three commands which correspond to the three steps of the algorithm outlined in our paper:
+- `ddw prepare-data`: Extracts cubic sub-tomograms used to generate model inputs and targets for model fitting.
+- `ddw fit-model`: Fits a U-Net for denoising and missing wedge reconstruction on data generated based on the output of the `prepare-data` command.
+- `ddw refine-tomogram`: Refines one or more tomograms using a fitted model.
+
+Each command has its own set of options which can be displayed by running `ddw <command> --help`. Moreover, all commands are also available as Python functions inside the `ddw` package. 
+
+We encourage developers, researchers and interested users to have a look at the `ddw.utils` package which contains most of the actual implementation of DeepDeWedge. 
 
 ## Tutorial
-To get started with DeepDeWedge, we strongly encourage you to have a look at our tutorial in `tutorial.ipynb`. There, we reconstruct the flagella of Chlamydomonas Reinhardtii based on data from the Tomo110 dataset, which was used in the tutorial for the related [CryoCARE](https://github.com/juglab/cryoCARE_T2T) denoising method.
+To get started with the DeepDeWedge command line interface, we strongly encourage you to have a look at our tutorial Jupyter notebooks in the `tutorial/` directory. There, we reconstruct the flagella of Chlamydomonas Reinhardtii based on data from the Tomo110 dataset, which was used in the tutorial for the related [CryoCARE](https://github.com/juglab/cryoCARE_T2T) denoising method.
 
 
 ## Contact

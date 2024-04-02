@@ -1,0 +1,37 @@
+shared:
+  project_dir: "./tutorial_project"
+  tomo0_files: 
+    - "./tutorial_data/tomo_even_frames.mrc"
+  tomo1_files: 
+    - "./tutorial_data/tomo_odd_frames.mrc"
+  subtomo_size: 96
+  mw_angle: 60
+  num_workers: 10
+  seed: 42
+
+prepare_data:
+  min_signal_fraction_in_subtomo: 0.3
+  subtomo_extraction_strides: [64, 96, 96]
+  val_fraction: 0.2
+
+fit_model:
+    unet_params_dict:
+      chans: 64
+      num_downsample_layers: 3
+      drop_prob: 0.0
+    adam_params_dict: 
+      lr: 0.0004
+    num_epochs: 1
+    batch_size: 5
+    gpus: [2]
+    logger: "csv"
+    update_subtomo_missing_wedges_every_n_epochs: 10
+    save_model_every_n_epochs: 10
+    save_n_models_with_lowest_val_loss: 5
+    check_val_every_n_epochs: 10
+
+refine_tomogram:
+    model_checkpoint_file: "/workspaces/DeepDeWedge/tensorboard_logs/tutorial_tomo110/version_0/checkpoints/epoch/epoch=999.ckpt"
+    subtomo_overlap: 32
+    batch_size: 10
+    gpu: 3
