@@ -1,17 +1,15 @@
 import math
+
 import torch
 
-from torch import fft
+from .fourier import get_3d_fft_freqs_on_grid
 from .rotation import rotate_vol_around_axis
-from .fourier import (
-    fft_3d,
-    ifft_3d,
-    apply_fourier_mask_to_tomo,
-    get_3d_fft_freqs_on_grid,
-)
 
 
 def get_missing_wedge_mask(grid_size, mw_angle, device="cpu"):
+    """
+    Produces a 3D binary mask with shape 'grid_size', which can be used to zero-out Fourier components that lie inside a missing wedge with width 'mw_angle'.
+    """
     grid = get_3d_fft_freqs_on_grid(grid_size=grid_size, device=device)
     # make normal vectors of two hyperplanes that bound missing wedge
     alpha = torch.deg2rad(torch.tensor(float(mw_angle))) / 2
@@ -36,6 +34,9 @@ def get_missing_wedge_mask(grid_size, mw_angle, device="cpu"):
 def get_rotated_missing_wedge_mask(
     grid_size, mw_angle, rot_axis, rot_angle, device="cpu"
 ):
+    """
+    Convenience function that generates a missing wedge mask and rotates it 'rot_angle' degrees around 'rot_axis'.
+    """
     grid_size = torch.tensor(grid_size)
     # enlarge grid size such that rotated grid fits inside
     adjusted_grid_size = (torch.ceil(math.sqrt(2) * grid_size) / 2.0) * 2

@@ -5,6 +5,9 @@ from ddw.prepare_data import prepare_data
 from .subtomo_dataset import SubtomoDataset
 
 def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction_strides, mw_angle, batch_size, num_workers, batches=None, verbose=False):
+    """
+    Computes the average mean and standard deviation of model-input-type sub-tomograms (with two missing wedges). These values are used to normalize sub-tomograms during model fitting and to normalize full tomograms in the final refinement step. 
+    """
     with tempfile.TemporaryDirectory() as subtomo_dir:
         prepare_data(
             tomo0_files=[tomo_file],
@@ -32,7 +35,11 @@ def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction
         mean, std = get_avg_model_input_mean_and_std_from_dataloader(fitting_dataloader, batches=batches, verbose=verbose)
     return mean, std
 
+
 def get_avg_model_input_mean_and_std_from_dataloader(dataloader, batches=None, verbose=False):
+    """
+    See above. 
+    """
     if batches is None:
         batches = 1 * len(dataloader)
     means, vars = [], []

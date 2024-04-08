@@ -1,8 +1,11 @@
 import torch
-from .missing_wedge import apply_fourier_mask_to_tomo
+from .fourier import apply_fourier_mask_to_tomo
 
 
 def masked_loss(model_output, target, rot_mw_mask, mw_mask, mw_weight=2.0):
+    """
+    The self-supervised per-sample loss function for denoising and missing wedge reconstruction.
+    """
     outside_mw_mask = rot_mw_mask * mw_mask
     outside_mw_loss = (
         apply_fourier_mask_to_tomo(

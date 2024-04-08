@@ -1,18 +1,23 @@
 import inspect
+
 import yaml
+
 
 def pprint_dict(d):
     """
     Pretty print a dictionary.
-    d: dict, dictionary to print
     """
     print(yaml.dump(d, default_flow_style=False))
 
+
 def print_help_for_function_arguments(func, arg_names=None, print_only_required=False):
+    """
+    Prints the help text of arguments of the DeepDeWedge commmands.
+    """
     sig = inspect.signature(func)
     if arg_names is None:
         arg_names = sig.parameters.keys()
-    if not hasattr(arg_names, '__iter__'):
+    if not hasattr(arg_names, "__iter__"):
         arg_names = [arg_names]
     for arg_name in arg_names:
         param = sig.parameters[arg_name]
@@ -24,6 +29,10 @@ def print_help_for_function_arguments(func, arg_names=None, print_only_required=
             default_value = None if required else param.default
             helpstr = param.annotation.__metadata__[0].help
             defaultstr = f"\n\tDEFAULT: {default_value}" if not required else ""
-            print(f"ARGUMENT '{arg_name}'\n\tREQUIRED: {required}{defaultstr}\n\tHELP: {helpstr}")
+            print(
+                f"ARGUMENT '{arg_name}'\n\tREQUIRED: {required}{defaultstr}\n\tHELP: {helpstr}"
+            )
         except:
-            print(f"ERROR: Failed to load help for '{arg_name}' from annotation metadata!")
+            print(
+                f"ERROR: Failed to load help for '{arg_name}' from annotation metadata!"
+            )

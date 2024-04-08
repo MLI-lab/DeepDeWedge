@@ -1,10 +1,14 @@
+import os
+import shutil
+
 import mrcfile
 import torch
-import os 
-import shutil
 
 
 def load_mrc_data(mrc_file):
+    """
+    Loads a .mrc or .rec file as a torch tensors.
+    """
     with mrcfile.open(mrc_file, permissive=True) as mrc:
         try:
             data = torch.tensor(mrc.data)
@@ -14,6 +18,9 @@ def load_mrc_data(mrc_file):
 
 
 def save_mrc_data(data, mrc_file, save=False):
+    """
+    Saves a torch tensor as an .mrc file.
+    """
     if save:
         if os.path.exists(mrc_file):
             print(f"File '{mrc_file}' already exists! Moving it to '{mrc_file}~'")

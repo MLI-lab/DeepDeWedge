@@ -1,39 +1,104 @@
 # %%
-import os
 import math
+import os
+import random
+from pathlib import Path
+from typing import List, Optional
+
 import torch
-import inspect
 import typer
 from typer_config import conf_callback_factory
 from typing_extensions import Annotated
-from typing import List, Optional
-from pathlib import Path
-import random
 
+from .utils.load_function_args_from_yaml_config import (
+    load_function_args_from_yaml_config,
+)
 from .utils.mrctools import load_mrc_data, save_mrc_data
-from .utils.subtomos import extract_subtomos, try_to_sample_non_overlapping_subtomo_ids
-from .utils.subtomo_dataset import SubtomoDataset
-from .utils.load_function_args_from_yaml_config import load_function_args_from_yaml_config
+from .utils.subtomos import extract_subtomos
 
-
-loader = lambda yaml_config_file: load_function_args_from_yaml_config(function=prepare_data, yaml_config_file=yaml_config_file)
+loader = lambda yaml_config_file: load_function_args_from_yaml_config(
+    function=prepare_data, yaml_config_file=yaml_config_file
+)
 callback = conf_callback_factory(loader)
 
+
 def prepare_data(
-    tomo0_files: Annotated[List[Path], typer.Option(help="List of paths to tomograms (mrc files) reconstructed from one half of the tilt series or movie frames.")],
-    tomo1_files: Annotated[List[Path], typer.Option(help="List of paths to tomograms (mrc files) reconstructed from the other half of the tilt series or movie frames.")],
-    subtomo_size: Annotated[int, typer.Option(help="Size of the cubic subtomograms to extract for model fitting.")],
-    val_fraction: Annotated[float, typer.Option(help="Fraction of subtomograms to use for validation. Increasing this fraction will decrease the number of subtomograms used for model fitting.")] = 0.1,
-    mask_files: Annotated[List[Path], typer.Option(help="List of paths to binary masks (mrc files) that outline the region of interest in the tomograms to guide subtomogram extraction.")] = [],
-    min_nonzero_mask_fraction_in_subtomo: Annotated[Optional[float], typer.Option(help="Minimum fraction of voxels in a subtomogram that correspond to nonzero voxels in the mask. If mask_files are provided, this parameter has to be provided as well. If no mask_files are provided, this parameter is ignored and has no effect.")] = None,
-    subtomo_extraction_strides: Annotated[Optional[List[int]], typer.Option(help="List of 3 integers specifying the 3D Strides used for subtomogram extraction. If set to None, stride 'subtomo_size' is used in all 3 directions.")] = None,
-    pad_before_subtomo_extraction: Annotated[bool, typer.Option(help="Whether to pad the tomograms before extracting subtomograms.")] = False,
-    extract_larger_subtomos_for_rotating: Annotated[bool, typer.Option(help="If True, larger subgomograms with a size of 'subtomo_size*sqrt(2)' will be extracted in order to avoid boundary effects when rotating the subtomograms.")] = True,
-    subtomo_dir: Annotated[Optional[Path], typer.Option(help="Where to save the subtomograms.")] = None,
-    project_dir: Annotated[Optional[Path], typer.Option(help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to 'project_dir/subtomos'.")] = None,
-    seed: Annotated[Optional[int], typer.Option(help="Controls the randomness of the validation data selection.")] = None,
+    tomo0_files: Annotated[
+        List[Path],
+        typer.Option(
+            help="List of paths to tomograms (mrc files) reconstructed from one half of the tilt series or movie frames."
+        ),
+    ],
+    tomo1_files: Annotated[
+        List[Path],
+        typer.Option(
+            help="List of paths to tomograms (mrc files) reconstructed from the other half of the tilt series or movie frames."
+        ),
+    ],
+    subtomo_size: Annotated[
+        int,
+        typer.Option(
+            help="Size of the cubic subtomograms to extract for model fitting. This value must be divisible by 2^{num_downsample_layers}, where {num_downsample_layers} is the number of downsampling layers used in the U-Net."
+        ),
+    ],
+    val_fraction: Annotated[
+        float,
+        typer.Option(
+            help="Fraction of subtomograms to use for validation. Increasing this fraction will decrease the number of subtomograms used for model fitting."
+        ),
+    ] = 0.1,
+    mask_files: Annotated[
+        List[Path],
+        typer.Option(
+            help="List of paths to binary masks (mrc files) that outline the region of interest in the tomograms to guide subtomogram extraction."
+        ),
+    ] = [],
+    min_nonzero_mask_fraction_in_subtomo: Annotated[
+        Optional[float],
+        typer.Option(
+            help="Minimum fraction of voxels in a subtomogram that correspond to nonzero voxels in the mask. If mask_files are provided, this parameter has to be provided as well. If no mask_files are provided, this parameter is ignored and has no effect."
+        ),
+    ] = 0.3,
+    subtomo_extraction_strides: Annotated[
+        Optional[List[int]],
+        typer.Option(
+            help="List of 3 integers specifying the 3D Strides used for subtomogram extraction. If set to None, stride 'subtomo_size' is used in all 3 directions. Smaller strides result in more sub-tomograms being extracted."
+        ),
+    ] = None,
+    pad_before_subtomo_extraction: Annotated[
+        bool,
+        typer.Option(
+            help="Whether to pad the tomograms before extracting subtomograms."
+        ),
+    ] = False,
+    extract_larger_subtomos_for_rotating: Annotated[
+        bool,
+        typer.Option(
+            help="If True, larger subgomograms with a size of 'subtomo_size*sqrt(2)' will be extracted in order to avoid boundary effects when rotating the subtomograms."
+        ),
+    ] = True,
+    subtomo_dir: Annotated[
+        Optional[Path], typer.Option(help="Where to save the subtomograms.")
+    ] = None,
+    project_dir: Annotated[
+        Optional[Path],
+        typer.Option(
+            help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to 'project_dir/subtomos'."
+        ),
+    ] = None,
+    seed: Annotated[
+        Optional[int],
+        typer.Option(help="Controls the randomness of the validation data selection."),
+    ] = None,
     verbose: Annotated[bool, typer.Option()] = True,
-    config: Annotated[Optional[Path], typer.Option(callback=callback, is_eager=True, help="Path to a yaml file containing the argumens for this function. Comand line arguments will overwrite the ones in the yaml file.")] = None,
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            callback=callback,
+            is_eager=True,
+            help="Path to a yaml file containing the argumens for this function. Comand line arguments will overwrite the ones in the yaml file.",
+        ),
+    ] = None,
 ):
     """
     Extract cubic sub-tomograms that are used to generate inputs and targets for model fitting. Typically the first command to run.
@@ -42,8 +107,10 @@ def prepare_data(
         if project_dir is not None:
             subtomo_dir = f"{project_dir}/subtomos"
         else:
-            raise ValueError("subtomo_dir must be provided if project_dir is not provided")
-    
+            raise ValueError(
+                "subtomo_dir must be provided if project_dir is not provided"
+            )
+
     if verbose:
         print(f"Saving all subtomograms to '{subtomo_dir}'.")
     fitting_subtomo_dir = f"{subtomo_dir}/fitting_subtomos"
@@ -58,7 +125,9 @@ def prepare_data(
         min_nonzero_mask_fraction_in_subtomo = 0.0
     else:
         if min_nonzero_mask_fraction_in_subtomo is None:
-            raise ValueError("min_nonzero_mask_fraction_in_subtomo must be provided if mask_files are provided")
+            raise ValueError(
+                "min_nonzero_mask_fraction_in_subtomo must be provided if mask_files are provided"
+            )
 
     # compute mean and std of all tomograms
     # means, vars = [], []
@@ -77,7 +146,9 @@ def prepare_data(
     if verbose:
         print(f"Starting subtomogram extraction from {len(tomo0_files)} tomogram(s).")
     fitting_counter, val_counter = 0, 0
-    for k, (tomo0_file, tomo1_file, mask_file) in enumerate(zip(tomo0_files, tomo1_files, mask_files)):
+    for k, (tomo0_file, tomo1_file, mask_file) in enumerate(
+        zip(tomo0_files, tomo1_files, mask_files)
+    ):
         tomo0 = load_mrc_data(tomo0_file).float()
         tomo0 -= dataset_mean
         tomo0 /= dataset_std
@@ -112,12 +183,24 @@ def prepare_data(
             enlarge_subtomos_for_rotating=extract_larger_subtomos_for_rotating,
             pad_before_subtomo_extraction=pad_before_subtomo_extraction,
         )
-        selected_subtomo_ids = [k for k, submask in enumerate(subtomos_mask) if (submask.sum() / submask.numel()) >= min_nonzero_mask_fraction_in_subtomo]
+        selected_subtomo_ids = [
+            k
+            for k, submask in enumerate(subtomos_mask)
+            if (submask.sum() / submask.numel()) >= min_nonzero_mask_fraction_in_subtomo
+        ]
         if mask_file is not None and verbose:
-            print(f"Masking selected {len(selected_subtomo_ids)}/{len(subtomos0)} subtomos extracted from tomogram {k}")
-        subtomos0 = [subtomo for k, subtomo in enumerate(subtomos0) if k in selected_subtomo_ids]
-        subtomos1 = [subtomo for k, subtomo in enumerate(subtomos1) if k in selected_subtomo_ids]
-        start_coords = [coords for k, coords in enumerate(start_coords) if k in selected_subtomo_ids]
+            print(
+                f"Masking selected {len(selected_subtomo_ids)}/{len(subtomos0)} subtomos extracted from tomogram {k}"
+            )
+        subtomos0 = [
+            subtomo for k, subtomo in enumerate(subtomos0) if k in selected_subtomo_ids
+        ]
+        subtomos1 = [
+            subtomo for k, subtomo in enumerate(subtomos1) if k in selected_subtomo_ids
+        ]
+        start_coords = [
+            coords for k, coords in enumerate(start_coords) if k in selected_subtomo_ids
+        ]
 
         # val_ids = try_to_sample_non_overlapping_subtomo_ids(
         #     subtomo_start_coords=start_coords,
@@ -132,7 +215,11 @@ def prepare_data(
         #         f"Continuing with {round((len(val_ids)/len(subtomos0))*100, 2)}% (i.e. {len(val_ids)}) validation subtomos."
         #     )
         num_val_subtomos = math.ceil(len(subtomos0) * val_fraction)
-        val_ids = random.Random(seed).sample(range(len(subtomos0)), num_val_subtomos) if num_val_subtomos > 0 else []
+        val_ids = (
+            random.Random(seed).sample(range(len(subtomos0)), num_val_subtomos)
+            if num_val_subtomos > 0
+            else []
+        )
         fitting_ids = [k for k in range(len(subtomos0)) if k not in val_ids]
 
         for idx in sorted(fitting_ids):
@@ -155,5 +242,9 @@ def prepare_data(
 
     if verbose:
         print(f"Done with sub-tomogram extraction.")
-        print(f"Saved a total of {fitting_counter} sub-tomograms for model fitting to '{subtomo_dir}/fitting_subtomos'.")
-        print(f"Saved a total of {val_counter} sub-tomograms for validation to '{subtomo_dir}/val_subtomos'.")
+        print(
+            f"Saved a total of {fitting_counter} sub-tomograms for model fitting to '{subtomo_dir}/fitting_subtomos'."
+        )
+        print(
+            f"Saved a total of {val_counter} sub-tomograms for validation to '{subtomo_dir}/val_subtomos'."
+        )

@@ -4,6 +4,9 @@ from scipy import ndimage, spatial
 
 
 def rotate_vol_around_axis(vol, rot_angle, rot_axis, output_shape=None, order=3):
+    """
+    Rotates the 3D tensor 'vol' by 'rot_angle' degrees around 'rot_axis'. The rotated tensor, which is typically larger than the original one, is center-cropped such that it has dimensions 'output_shape'. If 'output_shape' is None, the rotated tensor is cropped to the dimensions of 'vol'.
+    """
     vol_shape = torch.tensor(vol.shape[-3:])
     if output_shape is None:
         output_shape = vol_shape
@@ -36,5 +39,3 @@ def rotate_vol_around_axis(vol, rot_angle, rot_axis, output_shape=None, order=3)
         crop_offset[2] : crop_offset[2] + output_shape[2],
     ]
     return vol
-
-#%%

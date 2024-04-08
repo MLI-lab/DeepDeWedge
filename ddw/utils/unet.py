@@ -1,28 +1,43 @@
 import math
+
 import pytorch_lightning as pl
 import torch
-from torch import nn
 import tqdm
+from torch import nn
 import yaml
 
+from .fourier import apply_fourier_mask_to_tomo
 from .masked_loss import masked_loss
-from .missing_wedge import apply_fourier_mask_to_tomo
 from .mrctools import save_mrc_data
 from .normalization import get_avg_model_input_mean_and_std_from_dataloader
 
 
 class LitUnet3D(pl.LightningModule):
-    def __init__(self, unet_params, adam_params, subtomo_dir, update_subtomo_missing_wedges_every_n_epochs=10):
+    """
+    PyTrochLightning 'wrapper' of a 3D U-Net. This class implements steps for model fitting, validation and logging. This class is the heart of the 'ddw fit-model' command.
+    """
+
+    def __init__(
+        self,
+        unet_params,
+        adam_params,
+        subtomo_dir,
+        update_subtomo_missing_wedges_every_n_epochs=10,
+    ):
         super().__init__()
         self.unet_params = unet_params
         self.adam_params = adam_params
         self.subtomo_dir = subtomo_dir
-        self.update_subtomo_missing_wedges_every_n_epochs = update_subtomo_missing_wedges_every_n_epochs
+        self.update_subtomo_missing_wedges_every_n_epochs = (
+            update_subtomo_missing_wedges_every_n_epochs
+        )
         self.unet = Unet3D(**self.unet_params)
         self.save_hyperparameters()
 
     def forward(self, x):
-        return self.unet(x.unsqueeze(1)).squeeze(1)  # unsqueeze to add channel dimension, squeeze to remove it
+        return self.unet(x.unsqueeze(1)).squeeze(
+            1
+        )  # unsqueeze to add channel dimension, squeeze to remove it
 
     def training_step(self, batch, batch_idx):
         model_output = self(batch["model_input"])
@@ -33,7 +48,12 @@ class LitUnet3D(pl.LightningModule):
             mw_mask=batch["mw_mask"],
         )
         self.log(
-            "fitting_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "fitting_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
         )
         return loss
 
@@ -54,13 +74,20 @@ class LitUnet3D(pl.LightningModule):
             self.update_normalization()
 
     def on_train_epoch_end(self) -> None:
-        if (self.current_epoch + 1) % self.update_subtomo_missing_wedges_every_n_epochs == 0:  # +1 because the epoch indexing starts at 0
+        if (
+            self.current_epoch + 1
+        ) % self.update_subtomo_missing_wedges_every_n_epochs == 0:  # +1 because the epoch indexing starts at 0
             self.update_subtomo_missing_wedges()
             self.update_normalization()
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), **self.adam_params)
-        return optimizer
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
+        return [optimizer]  # , [scheduler]
+
+    # def lr_scheduler_step(self, scheduler, optimizer_idx, metric) -> None:
+    #     if scheduler is not None:
+    #         scheduler.step()
 
     def update_subtomo_missing_wedges(self):
         """
@@ -69,14 +96,14 @@ class LitUnet3D(pl.LightningModule):
         # we don't want to rotate the subtomos when updating them, so we create new dataloader objects with rotate_subtomos=False
         datasets = []
         train_loader = self.trainer.train_dataloader.loaders
-        train_set = train_loader.dataset 
-        train_set.rotate_subtomos = False  
+        train_set = train_loader.dataset
+        train_set.rotate_subtomos = False
         datasets.append(train_set)
         # val_dataloaders may be None
-        if self.trainer.val_dataloaders is not None:        
+        if self.trainer.val_dataloaders is not None:
             val_loader = self.trainer.val_dataloaders[0]
             val_set = val_loader.dataset
-            val_set.rotate_subtomos = False 
+            val_set.rotate_subtomos = False
             datasets.append(val_set)
         dataset = torch.utils.data.ConcatDataset(datasets)
         loader = torch.utils.data.DataLoader(
@@ -86,50 +113,42 @@ class LitUnet3D(pl.LightningModule):
         )
         with torch.no_grad():
             for batch in tqdm.tqdm(loader, desc="Updating subtomo missing wedges"):
-                assert batch["rot_angle"].float().norm() == 0 
+                assert batch["rot_angle"].float().norm() == 0
                 subtomo_batch = batch["model_input"]
-                subtomo_batch = subtomo_batch.to(self.device)                    
+                subtomo_batch = subtomo_batch.to(self.device)
                 # subtomo size has to be divisible by 2**num_downsample_layers due to U-Net architecture -> ensure this by padding
                 subtomo_dim = subtomo_batch.shape[-1]
-                factor = 2**self.unet_params["num_downsample_layers"]
+                factor = 2 ** self.unet_params["num_downsample_layers"]
                 padding = factor * math.ceil(subtomo_dim / factor) - subtomo_dim
                 subtomo_batch = torch.nn.functional.pad(
-                    subtomo_batch, 
-                    pad=(0, padding, 0, padding, 0, padding), 
-                    mode="constant", 
+                    subtomo_batch,
+                    pad=(0, padding, 0, padding, 0, padding),
+                    mode="constant",
                     value=0,
                 )
                 # forward pass
                 subtomo_batch_ref = self.forward(subtomo_batch)
                 # update missing wedges
                 mw_mask = batch["mw_mask"].to(subtomo_batch.device)
-                subtomo_batch = apply_fourier_mask_to_tomo(subtomo_batch, mw_mask) + apply_fourier_mask_to_tomo(subtomo_batch_ref, 1 - mw_mask)
+                subtomo_batch = apply_fourier_mask_to_tomo(
+                    subtomo_batch, mw_mask
+                ) + apply_fourier_mask_to_tomo(subtomo_batch_ref, 1 - mw_mask)
                 # remove padding
-                subtomo_batch = subtomo_batch[..., :subtomo_dim, :subtomo_dim, :subtomo_dim]
+                subtomo_batch = subtomo_batch[
+                    ..., :subtomo_dim, :subtomo_dim, :subtomo_dim
+                ]
                 for subtomo, file in zip(subtomo_batch, batch["subtomo0_file"]):
                     save_mrc_data(subtomo.cpu(), file)
-        train_set.rotate_subtomos = True  
-        if self.trainer.val_dataloaders is not None:         
-            val_set.rotate_subtomos = True  
+        train_set.rotate_subtomos = True
+        if self.trainer.val_dataloaders is not None:
+            val_set.rotate_subtomos = True
 
     def update_normalization(self):
         """
-        Update normalization parameters of the U-Net.
+        Updates the average model input mean and standard deviation used to normalize the sub-tomograms.
         """
-        # means, vars = [], []
-        # num_runs = 1
-        # train_loader = self.trainer.train_dataloader
-        # pbar = tqdm.tqdm(total=num_runs * len(train_loader), desc="Updating normalization")
-        # for _ in range(num_runs):
-        #     for batch in train_loader:
-        #         means.append(batch["model_input"].mean(dim=(-1, -2, -3)))
-        #         vars.append(batch["model_input"].var(dim=(-1, -2, -3)))
-        #         pbar.update(1)
-        # loc = torch.concat(means).mean(dim=0).item()
-        # scale = torch.sqrt(torch.concat(vars).mean(dim=0)).item()
         loc, scale = get_avg_model_input_mean_and_std_from_dataloader(
-            dataloader=self.trainer.train_dataloader,
-            verbose=True
+            dataloader=self.trainer.train_dataloader, verbose=True
         )
 
         # update normalization in unet
@@ -157,8 +176,9 @@ class LitUnet3D(pl.LightningModule):
 
 class Unet3D(torch.nn.Module):
     """
-    This is a PyTorch re-implementation of the 3D U-Net used in the IsoNet software package, which can be found here: https://github.com/IsoNet-cryoET/IsoNet/tree/master/models/unet
+    PyTorch implementation of a 3D U-Net, which was inspired by the one used in the IsoNet software package (https://github.com/IsoNet-cryoET/IsoNet/tree/master/models/unet)
     """
+
     def __init__(
         self,
         in_chans: int = 1,
@@ -185,7 +205,7 @@ class Unet3D(torch.nn.Module):
     @property
     def normalization_loc(self):
         return self._normalization_loc
-    
+
     @normalization_loc.setter
     def normalization_loc(self, normalization_loc):
         self._normalization_loc = nn.parameter.Parameter(
@@ -195,7 +215,7 @@ class Unet3D(torch.nn.Module):
     @property
     def normalization_scale(self):
         return self._normalization_scale
-    
+
     @normalization_scale.setter
     def normalization_scale(self, normalization_scale):
         self._normalization_scale = nn.parameter.Parameter(
@@ -276,15 +296,15 @@ class DownConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.Conv3d(in_chans, out_chans, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(out_chans),
+            nn.InstanceNorm3d(out_chans),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(out_chans, out_chans, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(out_chans),
+            nn.InstanceNorm3d(out_chans),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(out_chans, out_chans, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(out_chans),
+            nn.InstanceNorm3d(out_chans),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
         )
@@ -303,15 +323,15 @@ class UpConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.Conv3d(in_chans, in_chans // 2, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(in_chans // 2),
+            nn.InstanceNorm3d(in_chans // 2),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(in_chans // 2, in_chans // 2, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(in_chans // 2),
+            nn.InstanceNorm3d(in_chans // 2),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
             nn.Conv3d(in_chans // 2, out_chans, kernel_size=(3, 3, 3), padding=1),
-            nn.BatchNorm3d(out_chans),
+            nn.InstanceNorm3d(out_chans),
             nn.Dropout3d(drop_prob),
             nn.LeakyReLU(negative_slope=0.05, inplace=True),
         )
@@ -350,4 +370,3 @@ class SpatialUpSampling(nn.Module):
         output = torch.cat([output, cat], dim=1)
         output = self.activation(output)
         return output
-

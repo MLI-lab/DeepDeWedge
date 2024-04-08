@@ -1,19 +1,14 @@
-# %%
 import os
 
 import torch
 from torch.utils.data import Dataset
 from scipy import spatial
-import ctypes 
-import math
-from multiprocessing import Value
-import numpy as np
+from .fourier import apply_fourier_mask_to_tomo
 from .mrctools import load_mrc_data
 from .rotation import rotate_vol_around_axis
 from .missing_wedge import (
     get_missing_wedge_mask,
     get_rotated_missing_wedge_mask,
-    apply_fourier_mask_to_tomo,
 )
 
 
@@ -21,6 +16,10 @@ BASE_SEED = 888
 
 
 class SubtomoDataset(Dataset):
+    """
+    A torch dataset which produces the input-target sub-tomogram pairs used for model fitting. The directory 'subtomo_dir' must have the same structure as the output of the 'ddw prepare-data' command.
+    """
+
     def __init__(
         self,
         subtomo_dir,
@@ -113,3 +112,6 @@ class SubtomoDataset(Dataset):
             "rot_axis": rot_axis,
         }
         return item
+
+
+# %%

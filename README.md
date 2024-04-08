@@ -6,6 +6,7 @@ This repository contains an implementation of the DeepDeWedge method as describe
 The first step is to clone this repository, e.g. via
 ```
 git clone https://github.com/MLI-lab/DeepDeWedge
+cd DeepDeWedge
 ```
 We recommend to continue the installation in a fresh `Python 3.10.13` environment. To create such an environment, you can for example use [Anaconda](https://www.anaconda.com/download):
 ```
@@ -22,7 +23,7 @@ pip install -r requirements.txt
 ```
 Finally, you can, install the DeepDeWedge package via
 ```
-pip install -e .
+pip install .
 ``` 
 The installation should not take more than a few minutes in total. Upon successful installation, running the command
 ```
