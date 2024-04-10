@@ -3,8 +3,8 @@ import math
 import pytorch_lightning as pl
 import torch
 import tqdm
-from torch import nn
 import yaml
+from torch import nn
 
 from .fourier import apply_fourier_mask_to_tomo
 from .masked_loss import masked_loss
@@ -32,6 +32,7 @@ class LitUnet3D(pl.LightningModule):
             update_subtomo_missing_wedges_every_n_epochs
         )
         self.unet = Unet3D(**self.unet_params)
+        # self.ema = ExponentialMovingAverage(self.unet.parameters(), decay=0.995)
         self.save_hyperparameters()
 
     def forward(self, x):
@@ -68,6 +69,9 @@ class LitUnet3D(pl.LightningModule):
         self.log(
             "val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
+
+    # def on_before_zero_grad(self, optimizer) -> None:
+    #     self.ema.update()
 
     def on_train_start(self) -> None:
         if self.current_epoch == 0:

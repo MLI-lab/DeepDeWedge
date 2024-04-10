@@ -64,7 +64,7 @@ def refine_tomogram(
     recompute_normalization: Annotated[
         bool,
         typer.Option(
-            help="Whether to recompute the mean and variance used to normalize the tomo0s and tomo1s (see Appendix E in the paper). If `False`, the mean and variance of model inputs calculated during model fitting will be used. If `True`, the average model input mean and variance will be computed for each tomogram individually. We recommend setting this to to `True`. If you apply a model to a tomogram that was not used for model fitting or if the means and variances of the tomograms during model fitting are considerably different, recomputing the normalization is expected to be very beneficial for tomogram refinement."
+            help="Whether to recompute the mean and variance used to normalize the tomo0s and tomo1s (see Appendix B in the paper). If `False`, the mean and variance of model inputs calculated during model fitting will be used. If `True`, the average model input mean and variance will be computed for each tomogram individually. We recommend setting this to to `True`. If you apply a model to a tomogram that was not used for model fitting or if the means and variances of the tomograms during model fitting are considerably different, recomputing the normalization is expected to be very beneficial for tomogram refinement."
         ),
     ] = True,
     batch_size: Annotated[

@@ -30,11 +30,11 @@ fit_model:
     check_val_every_n_epochs: 10
     save_n_models_with_lowest_val_loss: 5
     save_n_models_with_lowest_fitting_loss: 5
-    save_model_every_n_epochs: 1000
+    save_model_every_n_epochs: 50
     logger: "csv"
 
 
 refine_tomogram:
-    model_checkpoint_file: "/workspaces/DeepDeWedge/tensorboard_logs/tutorial_tomo110/version_0/checkpoints/epoch/epoch=999.ckpt"
+    model_checkpoint_file: "./tutorial_data/fitted_model.ckpt"
     subtomo_overlap: 32
     batch_size: 10

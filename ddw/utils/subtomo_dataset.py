@@ -1,16 +1,13 @@
 import os
 
 import torch
-from torch.utils.data import Dataset
 from scipy import spatial
+from torch.utils.data import Dataset
+
 from .fourier import apply_fourier_mask_to_tomo
+from .missing_wedge import get_missing_wedge_mask, get_rotated_missing_wedge_mask
 from .mrctools import load_mrc_data
 from .rotation import rotate_vol_around_axis
-from .missing_wedge import (
-    get_missing_wedge_mask,
-    get_rotated_missing_wedge_mask,
-)
-
 
 BASE_SEED = 888
 

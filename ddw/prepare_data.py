@@ -56,7 +56,7 @@ def prepare_data(
     min_nonzero_mask_fraction_in_subtomo: Annotated[
         Optional[float],
         typer.Option(
-            help="Minimum fraction of voxels in a subtomogram that correspond to nonzero voxels in the mask. If mask_files are provided, this parameter has to be provided as well. If no mask_files are provided, this parameter is ignored and has no effect."
+            help="Minimum fraction of voxels in a subtomogram that correspond to nonzero voxels in the mask. If mask_files are provided, this parameter has to be provided as well. If no mask_files are provided, this parameter is ignored."
         ),
     ] = 0.3,
     subtomo_extraction_strides: Annotated[

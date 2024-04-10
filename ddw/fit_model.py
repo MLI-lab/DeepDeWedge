@@ -1,25 +1,21 @@
 # %%
-import pytorch_lightning as pl
+import ast
 import inspect
+import os
+from pathlib import Path
+from typing import Optional
 
+import pytorch_lightning as pl
+import typer
+from typer_config import conf_callback_factory
+from typing_extensions import Annotated
 
-from .utils.unet import LitUnet3D
 from .utils.dataloader import MultiEpochsDataLoader as DataLoader
-
 from .utils.load_function_args_from_yaml_config import (
     load_function_args_from_yaml_config,
 )
 from .utils.subtomo_dataset import SubtomoDataset
-
-from pathlib import Path
-from typing import Optional
-from typing_extensions import Annotated
-import typer
-import torch
-import os
-from typer_config import conf_callback_factory
-import ast
-
+from .utils.unet import LitUnet3D
 
 loader = lambda yaml_config_file: load_function_args_from_yaml_config(
     function=fit_model, yaml_config_file=yaml_config_file
@@ -203,8 +199,8 @@ def fit_model(
         val_dataloader = None
     # setup callbacks
     callbacks = []
-    lr_callback = pl.callbacks.LearningRateMonitor(logging_interval="epoch")
-    callbacks.append(lr_callback)
+    # lr_callback = pl.callbacks.LearningRateMonitor(logging_interval="epoch")
+    # callbacks.append(lr_callback)
     # this saves the model everey 50 epochs
     epoch_callback = pl.callbacks.ModelCheckpoint(
         dirpath=f"{logdir}/checkpoints/epoch",

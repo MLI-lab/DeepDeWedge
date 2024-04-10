@@ -37,7 +37,7 @@ The DeepDeWedge command line interface provides three commands which correspond 
 - `ddw fit-model`: Fits a U-Net for denoising and missing wedge reconstruction on data generated based on the output of the `prepare-data` command.
 - `ddw refine-tomogram`: Refines one or more tomograms using a fitted model.
 
-Each command has its own set of options which can be displayed by running `ddw <command> --help`. Moreover, all commands are also available as Python functions inside the `ddw` package. 
+Each command has its own set of arguments which can be displayed by running `ddw <command> --help`. All agruments can be either specified via the command line or by providing a `YAML` configuration file (see Tutorial). Moreover, all DeepDeWedge commands are available as Python functions inside the `ddw` package. 
 
 We encourage developers, researchers and interested users to have a look at the `ddw.utils` package which contains most of the actual implementation of DeepDeWedge. 
 
