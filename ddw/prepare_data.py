@@ -50,7 +50,7 @@ def prepare_data(
     mask_files: Annotated[
         List[Path],
         typer.Option(
-            help="List of paths to binary masks (mrc files) that outline the region of interest in the tomograms to guide subtomogram extraction."
+            help="List of paths to binary masks (mrc files) that outline the region of interest in the tomograms to guide subtomogram extraction. The DeepDeWedge reconstruction of areas outside the mask may be less accurate. If no mask_files are provided, the entire tomogram is used for subtomogram extraction."
         ),
     ] = [],
     min_nonzero_mask_fraction_in_subtomo: Annotated[
