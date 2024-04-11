@@ -62,7 +62,7 @@ def fit_model(
     project_dir: Annotated[
         Optional[str],
         typer.Option(
-            help="If either subtomo_dir or logdir is not provided, project_dir must be provided."
+            help="If either subtomo_dir or logdir is not provided, project_dir must be provided, and the missing directory will be set to '{project_dir}/subtomos' or '{project_dir}/logs'."
         ),
     ] = None,
     logdir: Annotated[

@@ -74,16 +74,19 @@ def prepare_data(
     extract_larger_subtomos_for_rotating: Annotated[
         bool,
         typer.Option(
-            help="If True, larger subgomograms with a size of 'subtomo_size*sqrt(2)' will be extracted in order to avoid boundary effects when rotating the subtomograms."
+            help="If True, larger subtomograms with a size of 'subtomo_size*sqrt(2)' will be extracted in order to avoid boundary effects when rotating the subtomograms."
         ),
     ] = True,
     subtomo_dir: Annotated[
-        Optional[Path], typer.Option(help="Where to save the subtomograms.")
+        Optional[Path],
+        typer.Option(
+            help="Where to save the subtomograms. If not provided, the subtomograms will be saved to '{project_dir}/subtomos'."
+        ),
     ] = None,
     project_dir: Annotated[
         Optional[Path],
         typer.Option(
-            help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to 'project_dir/subtomos'."
+            help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to '{project_dir}/subtomos'."
         ),
     ] = None,
     seed: Annotated[

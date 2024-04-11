@@ -58,7 +58,7 @@ def refine_tomogram(
     subtomo_overlap: Annotated[
         Optional[int],
         typer.Option(
-            help="Overlap between subtomograms. This determines the stride of the sliding window used to extract subtomograms. If 'None', this is set to 1/3 * subtomo_size."
+            help="Overlap between subtomograms. This determines the stride of the sliding window used to extract subtomograms. If 'None', this is set to '1/3 * subtomo_size'."
         ),
     ] = None,
     recompute_normalization: Annotated[
@@ -79,13 +79,13 @@ def refine_tomogram(
     output_dir: Annotated[
         Optional[Path],
         typer.Option(
-            help="Where to save the refined tomograms. If not provided, output dir is set to project_dir/refined_tomograms."
+            help="Where to save the refined tomograms. If not provided, either 'project_dir' has to be provided or 'return_subtomos' must be 'True'."
         ),
     ] = None,
     project_dir: Annotated[
         Optional[Path],
         typer.Option(
-            help="Path to the project directory. If return_subtomos is False, and output_dir is not provided, this has to be provided."
+            help="Path to the project directory. If not provided the refined tomograms will be saved to {project_dir}/refined_tomograms. If 'return_subtomos' is False, and 'output_dir' is not provided, this has to be provided."
         ),
     ] = None,
     num_workers: Annotated[
