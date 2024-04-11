@@ -73,7 +73,7 @@ def refine_tomogram(
     return_tomos: Annotated[
         bool,
         typer.Option(
-            help="Whether to return the refined tomograms as a list of tensors. If False, the refined tomograms will only be saved to the output_dir, and the function returns nothing."
+            help="Whether to return the refined tomograms as a list of tensors. If 'False', the refined tomograms will only be saved to 'output_dir', and the function returns nothing."
         ),
     ] = False,
     output_dir: Annotated[
