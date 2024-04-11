@@ -7,7 +7,7 @@ shared:
   subtomo_size: 96
   mw_angle: 50
   num_workers: 10
-  gpu: 1
+  gpu: 0
   seed: 42
 
 prepare_data:
