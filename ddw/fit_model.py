@@ -35,7 +35,7 @@ def fit_model(
         str,
         typer.Option(
             callback=ast.literal_eval,
-            help="Dictionary of parameters for PyTroch's the Adam optimizer. See tutorial notebook '2_fit_model.ipynb' or 'https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam' for details.",
+            help="Dictionary of parameters for PyTroch's the Adam optimizer. See the tutorial notebook on model fitting or 'https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam' for details.",
         ),
     ],
     num_epochs: Annotated[int, typer.Option(help="Number of epochs to fit the model.")],
