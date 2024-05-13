@@ -13,9 +13,8 @@ from typing_extensions import Annotated
 
 from .fit_model import LitUnet3D
 from .utils.fourier import apply_fourier_mask_to_tomo
-from .utils.load_function_args_from_yaml_config import (
-    load_function_args_from_yaml_config,
-)
+from .utils.load_function_args_from_yaml_config import \
+    load_function_args_from_yaml_config
 from .utils.missing_wedge import get_missing_wedge_mask
 from .utils.mrctools import load_mrc_data, save_mrc_data
 from .utils.normalization import get_avg_model_input_mean_and_std

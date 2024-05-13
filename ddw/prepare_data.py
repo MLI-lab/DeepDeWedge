@@ -2,6 +2,7 @@
 import math
 import os
 import random
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -10,9 +11,8 @@ import typer
 from typer_config import conf_callback_factory
 from typing_extensions import Annotated
 
-from .utils.load_function_args_from_yaml_config import (
-    load_function_args_from_yaml_config,
-)
+from .utils.load_function_args_from_yaml_config import \
+    load_function_args_from_yaml_config
 from .utils.mrctools import load_mrc_data, save_mrc_data
 from .utils.subtomos import extract_subtomos
 
@@ -89,6 +89,9 @@ def prepare_data(
             help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to '{project_dir}/subtomos'."
         ),
     ] = None,
+    overwrite: Annotated[bool, typer.Option(
+        help="Whether to overwrite the existing subomo_dir if it already exists. If False, the function will raise an error if the directory already exists."
+    )] = False,
     seed: Annotated[
         Optional[int],
         typer.Option(help="Controls the randomness of the validation data selection."),
@@ -106,23 +109,14 @@ def prepare_data(
     """
     Extract cubic sub-tomograms that are used to generate inputs and targets for model fitting. Typically the first command to run.
     """
-    if subtomo_dir is None:
-        if project_dir is not None:
-            subtomo_dir = f"{project_dir}/subtomos"
-        else:
-            raise ValueError(
-                "subtomo_dir must be provided if project_dir is not provided"
-            )
-
-    if verbose:
-        print(f"Saving all subtomograms to '{subtomo_dir}'.")
-    fitting_subtomo_dir = f"{subtomo_dir}/fitting_subtomos"
-    val_subtomo_dir = f"{subtomo_dir}/val_subtomos"
-    os.makedirs(f"{fitting_subtomo_dir}/subtomo0/", exist_ok=False)
-    os.makedirs(f"{fitting_subtomo_dir}/subtomo1/", exist_ok=False)
-    os.makedirs(f"{val_subtomo_dir}/subtomo0/", exist_ok=False)
-    os.makedirs(f"{val_subtomo_dir}/subtomo1/", exist_ok=False)
-
+    # create output directories
+    fitting_subtomo_dir, val_subtomo_dir = setup_subtomo_dir(
+        subtomo_dir=subtomo_dir,
+        project_dir=project_dir,
+        overwrite=overwrite,
+        verbose=verbose,
+    )
+    # check if mask_files are provided properly
     if len(mask_files) == 0:
         mask_files = [None] * len(tomo0_files)
         min_nonzero_mask_fraction_in_subtomo = 0.0
@@ -131,21 +125,7 @@ def prepare_data(
             raise ValueError(
                 "min_nonzero_mask_fraction_in_subtomo must be provided if mask_files are provided"
             )
-
-    # compute mean and std of all tomograms
-    # means, vars = [], []
-    # for tomo0_file, tomo1_file in zip(tomo0_files, tomo1_files):
-    #     tomo0 = load_mrc_data(tomo0_file).float()
-    #     tomo1 = load_mrc_data(tomo1_file).float()
-    #     means.append(tomo0.mean())
-    #     means.append(tomo1.mean())
-    #     vars.append(tomo0.var())
-    #     vars.append(tomo1.var())
-    # dataset_mean = torch.tensor(means).mean()
-    # dataset_std = torch.sqrt(torch.tensor(vars).mean())
-    dataset_mean = 0.0
-    dataset_std = 1.0
-
+    # actual subtomogram extraction
     if verbose:
         print(f"Starting subtomogram extraction from {len(tomo0_files)} tomogram(s).")
     fitting_counter, val_counter = 0, 0
@@ -153,8 +133,6 @@ def prepare_data(
         zip(tomo0_files, tomo1_files, mask_files)
     ):
         tomo0 = load_mrc_data(tomo0_file).float()
-        tomo0 -= dataset_mean
-        tomo0 /= dataset_std
         subtomos0, start_coords = extract_subtomos(
             tomo=tomo0,
             subtomo_size=subtomo_size,
@@ -163,8 +141,6 @@ def prepare_data(
             pad_before_subtomo_extraction=pad_before_subtomo_extraction,
         )
         tomo1 = load_mrc_data(tomo1_file).float()
-        tomo1 -= dataset_mean
-        tomo1 /= dataset_std
         subtomos1, _ = extract_subtomos(
             tomo=tomo1,
             subtomo_size=subtomo_size,
@@ -176,7 +152,6 @@ def prepare_data(
             mask = load_mrc_data(mask_file).float()
         else:
             mask = torch.ones_like(tomo0)
-        # check if mask contains only 0s and 1s
         if not (mask == 0).logical_or(mask == 1).all():
             raise ValueError("Mask entries must be either 0 or 1")
         subtomos_mask, _ = extract_subtomos(
@@ -251,3 +226,31 @@ def prepare_data(
         print(
             f"Saved a total of {val_counter} sub-tomograms for validation to '{subtomo_dir}/val_subtomos'."
         )
+
+
+def setup_subtomo_dir(subtomo_dir, project_dir, overwrite, verbose):
+    if subtomo_dir is None:
+        if project_dir is not None:
+            subtomo_dir = f"{project_dir}/subtomos"
+        else:
+            raise ValueError(
+                "subtomo_dir must be provided if project_dir is not provided"
+            )
+    if os.path.exists(subtomo_dir):
+        if overwrite == True:
+            if verbose:
+                print(f"Removing existing subtomogram directory '{subtomo_dir}'.")
+                shutil.rmtree(subtomo_dir)
+        else:
+            raise ValueError(
+                f"subtomo_dir '{subtomo_dir}' already exists. Set 'overwrite' to 'True' to remove it."
+            )
+    if verbose:
+        print(f"Saving all subtomograms to '{subtomo_dir}'.")
+    fitting_subtomo_dir = f"{subtomo_dir}/fitting_subtomos"
+    val_subtomo_dir = f"{subtomo_dir}/val_subtomos"
+    os.makedirs(f"{fitting_subtomo_dir}/subtomo0/", exist_ok=False)
+    os.makedirs(f"{fitting_subtomo_dir}/subtomo1/", exist_ok=False)
+    os.makedirs(f"{val_subtomo_dir}/subtomo0/", exist_ok=False)
+    os.makedirs(f"{val_subtomo_dir}/subtomo1/", exist_ok=False)
+    return fitting_subtomo_dir, val_subtomo_dir

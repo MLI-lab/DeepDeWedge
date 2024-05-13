@@ -11,9 +11,8 @@ from typer_config import conf_callback_factory
 from typing_extensions import Annotated
 
 from .utils.dataloader import MultiEpochsDataLoader as DataLoader
-from .utils.load_function_args_from_yaml_config import (
-    load_function_args_from_yaml_config,
-)
+from .utils.load_function_args_from_yaml_config import \
+    load_function_args_from_yaml_config
 from .utils.subtomo_dataset import SubtomoDataset
 from .utils.unet import LitUnet3D
 
