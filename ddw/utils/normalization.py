@@ -22,6 +22,7 @@ def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction
             subtomo_extraction_strides=subtomo_extraction_strides,  
             val_fraction=0.0,
             subtomo_dir=subtomo_dir,
+            overwrite=True,
             verbose=False,
         )
         dataset = SubtomoDataset(

@@ -11,8 +11,9 @@ import typer
 from typer_config import conf_callback_factory
 from typing_extensions import Annotated
 
-from .utils.load_function_args_from_yaml_config import \
-    load_function_args_from_yaml_config
+from .utils.load_function_args_from_yaml_config import (
+    load_function_args_from_yaml_config,
+)
 from .utils.mrctools import load_mrc_data, save_mrc_data
 from .utils.subtomos import extract_subtomos
 
@@ -89,9 +90,12 @@ def prepare_data(
             help="If 'subtomo_dir' is not provided, the subtomogram directory will saved to '{project_dir}/subtomos'."
         ),
     ] = None,
-    overwrite: Annotated[bool, typer.Option(
-        help="Whether to overwrite the existing subomo_dir if it already exists. If False, the function will raise an error if the directory already exists."
-    )] = False,
+    overwrite: Annotated[
+        bool,
+        typer.Option(
+            help="Whether to overwrite the existing subomo_dir if it already exists. If False, the function will raise an error if the directory already exists."
+        ),
+    ] = False,
     seed: Annotated[
         Optional[int],
         typer.Option(help="Controls the randomness of the validation data selection."),
