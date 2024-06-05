@@ -8,6 +8,7 @@ from torch import nn
 
 from .fourier import apply_fourier_mask_to_tomo
 from .masked_loss import masked_loss
+from .missing_wedge import get_missing_wedge_mask
 from .mrctools import save_mrc_data
 from .normalization import get_avg_model_input_mean_and_std_from_dataloader
 
@@ -115,28 +116,30 @@ class LitUnet3D(pl.LightningModule):
             batch_size=train_loader.batch_size,
             num_workers=train_loader.num_workers,
         )
+        # subtomo size has to be divisible by 2**num_downsample_layers due to U-Net architecture -> ensure this by padding
+        subtomo_dim = dataset[0]["model_input"].shape[-1]
+        factor = 2 ** self.unet_params["num_downsample_layers"]
+        padding = factor * math.ceil(subtomo_dim / factor) - subtomo_dim
+        # also make larger missing wedge mask that is compatible with the padded subtomos
+        mw_mask = get_missing_wedge_mask(grid_size=3*[subtomo_dim + padding], mw_angle=train_set.mw_angle)
         with torch.no_grad():
             for batch in tqdm.tqdm(loader, desc="Updating subtomo missing wedges"):
                 assert batch["rot_angle"].float().norm() == 0
-                subtomo_batch = batch["model_input"]
-                subtomo_batch = subtomo_batch.to(self.device)
-                # subtomo size has to be divisible by 2**num_downsample_layers due to U-Net architecture -> ensure this by padding
-                subtomo_dim = subtomo_batch.shape[-1]
-                factor = 2 ** self.unet_params["num_downsample_layers"]
-                padding = factor * math.ceil(subtomo_dim / factor) - subtomo_dim
+                subtomo_batch = batch["model_input"].to(self.device)
                 subtomo_batch = torch.nn.functional.pad(
                     subtomo_batch,
                     pad=(0, padding, 0, padding, 0, padding),
                     mode="constant",
                     value=0,
                 )
+                # repeat missing wedge mask for each subtomo in the batch
+                mw_mask_batch = mw_mask.repeat((*subtomo_batch.shape[:-3], 1, 1, 1)).to(subtomo_batch.device)
                 # forward pass
                 subtomo_batch_ref = self.forward(subtomo_batch)
-                # update missing wedges
-                mw_mask = batch["mw_mask"].to(subtomo_batch.device)
+                # update missing wedges    
                 subtomo_batch = apply_fourier_mask_to_tomo(
-                    subtomo_batch, mw_mask
-                ) + apply_fourier_mask_to_tomo(subtomo_batch_ref, 1 - mw_mask)
+                    subtomo_batch, mw_mask_batch
+                ) + apply_fourier_mask_to_tomo(subtomo_batch_ref, 1 - mw_mask_batch)
                 # remove padding
                 subtomo_batch = subtomo_batch[
                     ..., :subtomo_dim, :subtomo_dim, :subtomo_dim

@@ -225,10 +225,10 @@ def prepare_data(
     if verbose:
         print(f"Done with sub-tomogram extraction.")
         print(
-            f"Saved a total of {fitting_counter} sub-tomograms for model fitting to '{subtomo_dir}/fitting_subtomos'."
+            f"Saved a total of {fitting_counter} sub-tomograms for model fitting to '{fitting_subtomo_dir}'."
         )
         print(
-            f"Saved a total of {val_counter} sub-tomograms for validation to '{subtomo_dir}/val_subtomos'."
+            f"Saved a total of {val_counter} sub-tomograms for validation to '{val_subtomo_dir}'."
         )
 
 
@@ -240,6 +240,8 @@ def setup_subtomo_dir(subtomo_dir, project_dir, overwrite, verbose):
             raise ValueError(
                 "subtomo_dir must be provided if project_dir is not provided"
             )
+    if verbose:
+        print(f"Saving all subtomograms to '{subtomo_dir}'.")
     if os.path.exists(subtomo_dir):
         if overwrite == True:
             if verbose:
@@ -249,8 +251,7 @@ def setup_subtomo_dir(subtomo_dir, project_dir, overwrite, verbose):
             raise ValueError(
                 f"subtomo_dir '{subtomo_dir}' already exists. Set 'overwrite' to 'True' to remove it."
             )
-    if verbose:
-        print(f"Saving all subtomograms to '{subtomo_dir}'.")
+
     fitting_subtomo_dir = f"{subtomo_dir}/fitting_subtomos"
     val_subtomo_dir = f"{subtomo_dir}/val_subtomos"
     os.makedirs(f"{fitting_subtomo_dir}/subtomo0/", exist_ok=False)
