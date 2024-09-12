@@ -9,7 +9,6 @@ from torch import nn
 from .fourier import apply_fourier_mask_to_tomo
 from .masked_loss import masked_loss
 from .missing_wedge import get_missing_wedge_mask
-from .mrctools import save_mrc_data
 from .normalization import get_avg_model_input_mean_and_std_from_dataloader
 
 
@@ -145,7 +144,7 @@ class LitUnet3D(pl.LightningModule):
                     ..., :subtomo_dim, :subtomo_dim, :subtomo_dim
                 ]
                 for subtomo, file in zip(subtomo_batch, batch["subtomo0_file"]):
-                    save_mrc_data(subtomo.cpu(), file)
+                    torch.save(subtomo.cpu().clone(), file)
         train_set.rotate_subtomos = True
         if self.trainer.val_dataloaders is not None:
             val_set.rotate_subtomos = True

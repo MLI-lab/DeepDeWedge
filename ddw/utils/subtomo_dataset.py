@@ -7,7 +7,6 @@ from torch.utils.data import Dataset
 from .fourier import apply_fourier_mask_to_tomo
 from .missing_wedge import (get_missing_wedge_mask,
                             get_rotated_missing_wedge_mask)
-from .mrctools import load_mrc_data
 from .rotation import rotate_vol_around_axis
 
 BASE_SEED = 888
@@ -57,10 +56,10 @@ class SubtomoDataset(Dataset):
 
     def __getitem__(self, index):
         # load subtomos
-        subtomo0_file = f"{self.subtomo_dir}/subtomo0/{index}.mrc"
-        subtomo0 = load_mrc_data(subtomo0_file)
-        subtomo1_file = f"{self.subtomo_dir}/subtomo1/{index}.mrc"
-        subtomo1 = load_mrc_data(subtomo1_file)
+        subtomo0_file = f"{self.subtomo_dir}/subtomo0/{index}.pt"
+        subtomo0 = torch.load(subtomo0_file)
+        subtomo1_file = f"{self.subtomo_dir}/subtomo1/{index}.pt"
+        subtomo1 = torch.load(subtomo1_file)
         # rotate subtomos
         if self.rotate_subtomos == True:
             rot_axis, rot_angle = self._sample_rot_axis_and_angle(index)

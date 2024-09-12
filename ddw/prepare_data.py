@@ -14,7 +14,7 @@ from typing_extensions import Annotated
 from .utils.load_function_args_from_yaml_config import (
     load_function_args_from_yaml_config,
 )
-from .utils.mrctools import load_mrc_data, save_mrc_data
+from .utils.mrctools import load_mrc_data
 from .utils.subtomos import extract_subtomos
 
 loader = lambda yaml_config_file: load_function_args_from_yaml_config(
@@ -205,20 +205,20 @@ def prepare_data(
         fitting_ids = [k for k in range(len(subtomos0)) if k not in val_ids]
 
         for idx in sorted(fitting_ids):
-            save_mrc_data(
-                subtomos0[idx], f"{fitting_subtomo_dir}/subtomo0/{fitting_counter}.mrc"
+            torch.save(
+                subtomos0[idx].clone(), f"{fitting_subtomo_dir}/subtomo0/{fitting_counter}.pt"
             )
-            save_mrc_data(
-                subtomos1[idx], f"{fitting_subtomo_dir}/subtomo1/{fitting_counter}.mrc"
+            torch.save(
+                subtomos1[idx].clone(), f"{fitting_subtomo_dir}/subtomo1/{fitting_counter}.pt"
             )
             fitting_counter += 1
 
         for idx in sorted(val_ids):
-            save_mrc_data(
-                subtomos0[idx], f"{val_subtomo_dir}/subtomo0/{val_counter}.mrc"
+            torch.save(
+                subtomos0[idx].clone(), f"{val_subtomo_dir}/subtomo0/{val_counter}.pt"
             )
-            save_mrc_data(
-                subtomos1[idx], f"{val_subtomo_dir}/subtomo1/{val_counter}.mrc"
+            torch.save(
+                subtomos1[idx].clone(), f"{val_subtomo_dir}/subtomo1/{val_counter}.pt"
             )
             val_counter += 1
 
