@@ -1,3 +1,4 @@
+certifi>=2017.4.17
 matplotlib==3.8.4
 mrcfile==1.5.0
 pandas==2.2.1
@@ -12,3 +13,4 @@ typer-cli==0.12.0
 typer-config==1.4.0
 typer-slim==0.12.0
 typing_extensions==4.9.0
+urllib3<3,>=1.21.1

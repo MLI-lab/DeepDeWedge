@@ -10,12 +10,12 @@ cd DeepDeWedge
 ```
 We recommend to continue the installation in a fresh `Python 3.10.13` environment. To create such an environment, you can for example use [Anaconda](https://www.anaconda.com/download):
 ```
-conda create -n ddw_env python=3.10.13
+conda create -n ddw_env python=3.10.13 pip=23.2.1
 conda activate ddw_env
 ```
 Next, you have to install a version of `PyTorch` that is compatible with your `CUDA` version. DeepDeWedge was developed using `Pytorch 2.2.0` and `CUDA 11.8`, so we recommend this combination. The corresponding `conda` install command is
 ```
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install pytorch==2.2.0 pytorch-cuda=11.8 -c pytorch -c nvidia
 ```
 You can find a list of all `PyTorch` versions and the compatible `CUDA` versions [here](https://pytorch.org/get-started/previous-versions/). The remaining requirements can be istalled via
 ```
