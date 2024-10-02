@@ -71,11 +71,15 @@ If you have any questions or problems, or if you found a bug in the code, please
 ## Citation
 
 ```
-@article{wiedemann2023deep,
-  title   = {A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography},
-  author  = {Wiedemann, Simon and Heckel, Reinhard},
-  journal = {arXiv preprint arXiv:2311.05539},
-  year    = {2023}
+@article{wiedemann2024deep,
+  title={A deep learning method for simultaneous denoising and missing wedge reconstruction in cryogenic electron tomography},
+  author={Wiedemann, Simon and Heckel, Reinhard},
+  journal={Nature Communications},
+  volume={15},
+  number={1},
+  pages={8255},
+  year={2024},
+  publisher={Nature Publishing Group UK London}
 }
 ```
 
