@@ -1,6 +1,6 @@
 # DeepDeWedge
 
-This repository contains an implementation of the DeepDeWedge method as described in our manuscript ["A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography"](https://arxiv.org/abs/2311.05539). Our implementation comes as a Python package with an accompanying command line interface.
+This repository contains an implementation of the DeepDeWedge method as described in our manuscript ["A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography"](https://www.nature.com/articles/s41467-024-51438-y). Our implementation comes as a Python package with an accompanying command line interface.
 
 ## Installation
 The first step is to clone this repository, e.g. via
