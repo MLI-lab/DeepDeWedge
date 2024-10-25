@@ -1,5 +1,6 @@
 import os
 
+import time
 import torch
 from scipy import spatial
 from torch.utils.data import Dataset
@@ -10,6 +11,19 @@ from .missing_wedge import (get_missing_wedge_mask,
 from .rotation import rotate_vol_around_axis
 
 BASE_SEED = 888
+
+
+def safe_load(file_path, max_retries=3, delay=1):
+    for attempt in range(max_retries):
+        try:
+            return torch.load(file_path)
+        except RuntimeError as e:
+            print(f"Error loading {file_path}")
+            if attempt == max_retries - 1:
+                raise e  # Reraise if it's the last attempt
+            print(f"Retrying in {delay} seconds")
+            time.sleep(delay)  # Wait before retrying
+
 
 
 class SubtomoDataset(Dataset):
@@ -57,9 +71,9 @@ class SubtomoDataset(Dataset):
     def __getitem__(self, index):
         # load subtomos
         subtomo0_file = f"{self.subtomo_dir}/subtomo0/{index}.pt"
-        subtomo0 = torch.load(subtomo0_file)
+        subtomo0 = safe_load(subtomo0_file)
         subtomo1_file = f"{self.subtomo_dir}/subtomo1/{index}.pt"
-        subtomo1 = torch.load(subtomo1_file)
+        subtomo1 = safe_load(subtomo1_file)
         # rotate subtomos
         if self.rotate_subtomos == True:
             rot_axis, rot_angle = self._sample_rot_axis_and_angle(index)
