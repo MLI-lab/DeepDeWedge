@@ -7,7 +7,8 @@ shared:
   subtomo_size: 96
   mw_angle: 50
   num_workers: 10
-  gpu: 0
+  gpu: [0, 1]
+  distributed_backend: "gloo"
   seed: 42
 
 prepare_data:
@@ -25,7 +26,7 @@ fit_model:
     adam_params_dict: 
       lr: 0.0004
     num_epochs: 1000
-    batch_size: 5
+    batch_size: 1
     update_subtomo_missing_wedges_every_n_epochs: 10
     check_val_every_n_epochs: 10
     save_n_models_with_lowest_val_loss: 5
