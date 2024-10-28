@@ -17,10 +17,12 @@ def safe_load(file_path, max_retries=3, delay=1):
     for attempt in range(max_retries):
         try:
             return torch.load(file_path)
-        except RuntimeError as e:
+        # except everything to catch all exceptions
+        except Exception as e:
             print(f"Error loading {file_path}")
             if attempt == max_retries - 1:
                 raise e  # Reraise if it's the last attempt
+            print(f"Error message is: {e}")
             print(f"Retrying in {delay} seconds")
             time.sleep(delay)  # Wait before retrying
 
