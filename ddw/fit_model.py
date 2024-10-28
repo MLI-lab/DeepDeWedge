@@ -235,7 +235,6 @@ def fit_model(
         accelerator="gpu",
         devices=devices,
         strategy=pl.strategies.DDPStrategy(process_group_backend=distributed_backend),# if len(devices) > 1 else None,
-        replace_sampler_ddp=False,  # need this such that ddp works with MultiEpochsDataLoader
         check_val_every_n_epoch=(
             check_val_every_n_epochs if val_data_exists else num_epochs
         ),
@@ -243,7 +242,6 @@ def fit_model(
         logger=logger,
         callbacks=callbacks,
         detect_anomaly=True,
-        resume_from_checkpoint=resume_from_checkpoint,
     )
 
     # setup dataloaders
@@ -265,9 +263,10 @@ def fit_model(
     else:
         val_dataloader = None
     # fit the model
-    if val_data_exists and trainer.resume_from_checkpoint is None:
+    if val_data_exists and resume_from_checkpoint is None:
         trainer.validate(lit_unet, val_dataloader)
     trainer.fit(
+        ckpt_path=resume_from_checkpoint,
         model=lit_unet,
         train_dataloaders=fitting_dataloader,
         val_dataloaders=val_dataloader,
