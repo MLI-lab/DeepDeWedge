@@ -116,7 +116,7 @@ def fit_model(
         typer.Option(
             callback=callback,
             is_eager=True,
-            help="Path to a yaml file containing the argumens for this function. Comand line arguments will overwrite the ones in the yaml file.",
+            help="Path to a yaml file containing the arguments for this function. Command line arguments will overwrite the ones in the yaml file.",
         ),
     ] = None,
 ):
