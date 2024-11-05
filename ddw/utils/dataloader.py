@@ -3,9 +3,9 @@ from torch.utils.data import BatchSampler
 
 class MultiEpochsDataLoader(torch.utils.data.DataLoader):
     """
-    The MultiEpochsDataLoader is a PyTorch dataloader that re-uses worker processes rather than re-initializing them every epoch.
-    For DeepDeWedge, the MultiEpochsDataLoader significantly reduces the fitting time when epochs are short.
-    This is due to computationally expensive spatial rotations applied whenever a new sub-tomogram pair is sampled from the training set.
+    The MultiEpochsDataLoader is a PyTorch dataloader that re-uses worker processes rather than re-initializing the every epoch (see https://github.com/pytorch/pytorch/issues/15849#issuecomment-518126031).
+    For DeepDeWedge, we found that the MultiEpochsDataLoader significantly reduces the fitting time compared to the standard dataloder when epochs are short, i.e., consist of few batches.
+    This is likely due to the computationally expensive spatial rotations that are applied whenever a new sub-tomogram pair is sampled from the training set.
     """
 
     def __init__(self, *args, **kwargs):
@@ -17,6 +17,7 @@ class MultiEpochsDataLoader(torch.utils.data.DataLoader):
             "batch_size": self.batch_sampler.batch_size,
             "drop_last": self.batch_sampler.drop_last,
         }
+        self.batch_size = self.batch_sampler.batch_size  # ensure batch_size is set becaus in multi gpu training it was not find when updating the subtomo missing wedges
         self.batch_sampler = _RepeatSampler(**kwargs)
         self._DataLoader__initialized = True
         self.iterator = super().__iter__()
@@ -27,10 +28,8 @@ class MultiEpochsDataLoader(torch.utils.data.DataLoader):
 
 
 class _RepeatSampler(BatchSampler):
-    """Sampler that repeats batches indefinitely.
-
-    Args:
-        batch_sampler (BatchSampler): The original batch sampler to repeat.
+    """
+    Wrapper of BatchSampler that repeats batches indefinitely.
     """
 
     def __init__(self, *args, **kwargs):
