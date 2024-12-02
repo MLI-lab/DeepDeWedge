@@ -32,4 +32,7 @@ def load_function_args_from_yaml_config(
                     f"Overriding value '{args[arg]}' for argument '{arg}' found in field '{shared_field_name}' with value '{cfg[arg]}' from field '{function.__name__}'!"
                 )
             args[arg] = cfg[arg]
+    # edge case: ensure arg "gpu" in args is converted to list
+    if "gpu" in args.keys() and not isinstance(args["gpu"], list):
+        args["gpu"] = [args["gpu"]]
     return args

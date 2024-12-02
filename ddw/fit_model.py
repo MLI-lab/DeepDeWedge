@@ -7,7 +7,9 @@ from typing import Optional
 
 import pytorch_lightning as pl
 import typer
+import torch
 from typer_config import conf_callback_factory
+from typing import Union, List
 from typing_extensions import Annotated
 
 from .utils.dataloader import MultiEpochsDataLoader as DataLoader
@@ -15,6 +17,7 @@ from .utils.load_function_args_from_yaml_config import \
     load_function_args_from_yaml_config
 from .utils.subtomo_dataset import SubtomoDataset
 from .utils.unet import LitUnet3D
+
 
 loader = lambda yaml_config_file: load_function_args_from_yaml_config(
     function=fit_model, yaml_config_file=yaml_config_file
@@ -45,7 +48,7 @@ def fit_model(
     mw_angle: Annotated[
         float, typer.Option(help="Width of the missing wedge in degrees.")
     ],
-    gpu: Annotated[int, typer.Option(help="Which GPU to use for model fitting.")],
+    gpu: Annotated[List[int], typer.Option(help="Which GPU(s) to use for model fitting. Example: gpu=0 uses the first GPU, gpu=[0,1] uses the first two GPUs.")],
     num_workers: Annotated[
         int,
         typer.Option(
@@ -101,6 +104,10 @@ def fit_model(
     resume_from_checkpoint: Annotated[
         Optional[str], typer.Option(help="Continue model fitting from a checkpoint.")
     ] = None,
+    distributed_backend: Annotated[
+        str, 
+        typer.Option(help="Distributed backend to use when fitting on multiple GPUs, e.g, 'nccl' (default) or 'gloo'. Ignored if fitting on a single GPU.")
+    ] = "nccl",
     seed: Annotated[
         Optional[int], typer.Option(help="Seed for reproducibility.")
     ] = None,
@@ -109,7 +116,7 @@ def fit_model(
         typer.Option(
             callback=callback,
             is_eager=True,
-            help="Path to a yaml file containing the argumens for this function. Comand line arguments will overwrite the ones in the yaml file.",
+            help="Path to a yaml file containing the arguments for this function. Command line arguments will overwrite the ones in the yaml file.",
         ),
     ] = None,
 ):
@@ -178,24 +185,6 @@ def fit_model(
             rotate_subtomos=True,
             deterministic_rotations=True,
         )
-    # setup dataloaders
-    fitting_dataloader = DataLoader(
-        dataset=fitting_dataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        persistent_workers=True,
-        pin_memory=True,
-    )
-    if val_data_exists:
-        val_dataloader = DataLoader(
-            dataset=val_dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            shuffle=False,
-            pin_memory=True,
-        )
-    else:
-        val_dataloader = None
     # setup callbacks
     callbacks = []
     # lr_callback = pl.callbacks.LearningRateMonitor(logging_interval="epoch")
@@ -240,10 +229,16 @@ def fit_model(
         update_subtomo_missing_wedges_every_n_epochs=update_subtomo_missing_wedges_every_n_epochs,
     )
     # initialize the trainer
+    devices = [gpu] if isinstance(gpu, int) else gpu
+    strategy = pl.strategies.DDPStrategy(
+        process_group_backend=distributed_backend, 
+        find_unused_parameters=False,  # setting this to true gave a warning that it might slow things down
+    ) if len(devices) > 1 else None
     trainer = pl.Trainer(
         max_epochs=num_epochs,
         accelerator="gpu",
-        devices=[gpu],
+        devices=devices,
+        strategy=strategy,
         check_val_every_n_epoch=(
             check_val_every_n_epochs if val_data_exists else num_epochs
         ),
@@ -251,12 +246,32 @@ def fit_model(
         logger=logger,
         callbacks=callbacks,
         detect_anomaly=True,
-        resume_from_checkpoint=resume_from_checkpoint,
+        resume_from_checkpoint=resume_from_checkpoint,  # for pytorch-lightning < 2.0
     )
+
+    # setup dataloaders
+    fitting_dataloader = DataLoader(
+        dataset=fitting_dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        persistent_workers=True,
+        pin_memory=True,
+    )
+    if val_data_exists:
+        val_dataloader = DataLoader(
+            dataset=val_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            shuffle=False,
+            pin_memory=True,
+        )
+    else:
+        val_dataloader = None
     # fit the model
-    if val_data_exists and trainer.resume_from_checkpoint is None:
+    if val_data_exists and resume_from_checkpoint is None:
         trainer.validate(lit_unet, val_dataloader)
     trainer.fit(
+        #ckpt_path=resume_from_checkpoint,  # for pytorch-lightning >= 2.0
         model=lit_unet,
         train_dataloaders=fitting_dataloader,
         val_dataloaders=val_dataloader,
