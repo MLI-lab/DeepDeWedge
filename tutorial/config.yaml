@@ -1,19 +1,18 @@
 shared:
-  project_dir: "./tutorial_project"
+  project_dir: "/media/ssd1/simon/ddw/tutorial_project"
   tomo0_files: 
-    - "./tutorial_data/tomo_even_frames.rec"
+    - "/media/ssd1/simon/ddw/tutorial_data/tomo_even_frames.rec"
   tomo1_files: 
-    - "./tutorial_data/tomo_odd_frames.rec"
+    - "/media/ssd1/simon/ddw/tutorial_data/tomo_odd_frames.rec"
   subtomo_size: 96
   mw_angle: 50
   num_workers: 10
-  gpu: [0, 1]
-  distributed_backend: "gloo"
+  gpu: 0
   seed: 42
 
 prepare_data:
   mask_files:
-    - "./tutorial_data/mask.mrc"
+    - "/media/ssd1/simon/ddw/tutorial_data/mask.mrc"
   min_nonzero_mask_fraction_in_subtomo: 0.3
   subtomo_extraction_strides: [64, 80, 80] 
   val_fraction: 0.2
@@ -26,7 +25,7 @@ fit_model:
     adam_params_dict: 
       lr: 0.0004
     num_epochs: 1000
-    batch_size: 1
+    batch_size: 6
     update_subtomo_missing_wedges_every_n_epochs: 10
     check_val_every_n_epochs: 10
     save_n_models_with_lowest_val_loss: 5
@@ -36,6 +35,6 @@ fit_model:
 
 
 refine_tomogram:
-    model_checkpoint_file: "./tutorial_data/fitted_model.ckpt"
+    model_checkpoint_file: "/media/ssd1/simon/ddw/tutorial_project/logs/gpus=2/checkpoints/epoch/epoch=999.ckpt"
     subtomo_overlap: 32
     batch_size: 10
