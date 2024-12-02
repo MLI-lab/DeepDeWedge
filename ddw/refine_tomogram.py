@@ -94,9 +94,9 @@ def refine_tomogram(
         ),
     ] = 0,
     gpu: Annotated[
-        Optional[int],
+        Optional[List[int]],
         typer.Option(
-            help="GPU id on which to run the model. If None, the model will be run on the CPU."
+            help="GPU id on which to run the model. If None, the model will be run on the CPU. Currently, only a single GPU is supported. Providing multiple GPUs will result in a warning and only the first GPU will be used."
         ),
     ] = None,
     config: Annotated[
@@ -132,7 +132,11 @@ def refine_tomogram(
     if subtomo_overlap is None:
         subtomo_overlap = int(math.ceil(subtomo_size / 3))
 
-    device = "cpu" if gpu is None else f"cuda:{gpu}"
+    if hasattr(gpu, "__len__"):
+        if len(gpu) > 1:
+            print(f"WARNING: Currently, only a single GPU is supported in 'ddw refine-tomogram'. You passed gpu={gpu}. Continuing with gpu={gpu[0]}.")
+        
+    device = "cpu" if gpu is None else f"cuda:{gpu[0]}"
     lightning_model = (
         LitUnet3D.load_from_checkpoint(model_checkpoint_file).to(device).eval()
     )

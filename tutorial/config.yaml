@@ -7,7 +7,8 @@ shared:
   subtomo_size: 96
   mw_angle: 50
   num_workers: 10
-  gpu: 0
+  gpu: 0  # you can also set this to a list of GPUs, e.g. [0, 1]. Note: Only fit_model will use multiple GPUs. refine_tomogram will use only one GPU (the first one in the list). 
+  # distributed_backend: "nccl"  # which backend PyTorch Lightning uses for distributed training 
   seed: 42
 
 prepare_data:
@@ -31,7 +32,7 @@ fit_model:
     save_n_models_with_lowest_val_loss: 5
     save_n_models_with_lowest_fitting_loss: 5
     save_model_every_n_epochs: 50
-    logger: "csv"
+    logger: "csv" 
 
 
 refine_tomogram:
