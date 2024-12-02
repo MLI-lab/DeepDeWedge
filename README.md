@@ -2,6 +2,10 @@
 
 This repository contains an implementation of the DeepDeWedge method as described in our manuscript ["A Deep Learning Method for Simultaneous Denoising and Missing Wedge Reconstruction in Cryogenic Electron Tomography"](https://www.nature.com/articles/s41467-024-51438-y). Our implementation comes as a Python package with an accompanying command line interface.
 
+## Updates
+
+- **Multi-GPU model fitting** (2024-12-02): You can now use mutltiple GPUs for model fitting by setting the `gpu` argument in the `fit_model` section of your `yaml` config to a list of GPU indices. For more details, see the output of `ddw fit-model --help`.  **Note:** Currently, the `refine-tomogram` still only works with a single GPU. If `refine-tomogram` receives multiple GPU indices (e.g. through the `shared` field), it will print a warning and only use the first GPU.
+
 ## Installation
 The first step is to clone this repository, e.g. via
 ```
