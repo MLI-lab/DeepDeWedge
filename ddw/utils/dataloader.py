@@ -17,7 +17,7 @@ class MultiEpochsDataLoader(torch.utils.data.DataLoader):
             "batch_size": self.batch_sampler.batch_size,
             "drop_last": self.batch_sampler.drop_last,
         }
-        self.batch_size = self.batch_sampler.batch_size  # ensure batch_size is set becaus in multi gpu training it was not find when updating the subtomo missing wedges
+        self.batch_size = self.batch_sampler.batch_size  # ensure batch_size is set because it was not found when updating the subtomo missing wedges in the multi gpu setup
         self.batch_sampler = _RepeatSampler(**kwargs)
         self._DataLoader__initialized = True
         self.iterator = super().__iter__()
