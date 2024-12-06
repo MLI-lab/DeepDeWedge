@@ -238,7 +238,8 @@ def _refine_single_tomogram(
         for batch in tqdm.tqdm(subtomo_loader, desc=pbar_desc):
             batch_subtomos = batch[0].to(lightning_model.device)
             model_output = lightning_model(batch_subtomos)
-            model_outputs.append(model_output.detach())
+            model_output = model_output.detach().cpu()
+            model_outputs.append(model_output)
     model_outputs = list(torch.concat(model_outputs, 0))
 
     tomo_ref = reassemble_subtomos(
