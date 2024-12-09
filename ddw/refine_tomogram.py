@@ -210,7 +210,7 @@ def _refine_single_tomogram(
     pbar_desc="Refining tomogram",
 ):
 
-    tomo = load_mrc_data(tomo_file).float().to(lightning_model.device)
+    tomo = load_mrc_data(tomo_file).float()#.to(lightning_model.device)
     # apply missing wedge mask here to be more consistent with data during model fitting
     mw_mask = get_missing_wedge_mask(tomo.shape, mw_angle, device=tomo.device)
     tomo = apply_fourier_mask_to_tomo(tomo, mw_mask)
@@ -225,6 +225,7 @@ def _refine_single_tomogram(
         enlarge_subtomos_for_rotating=False,
         pad_before_subtomo_extraction=True,
     )
+    
     subtomos = TensorDataset(torch.stack(subtomos))
     subtomo_loader = DataLoader(
         subtomos,
@@ -237,7 +238,8 @@ def _refine_single_tomogram(
         for batch in tqdm.tqdm(subtomo_loader, desc=pbar_desc):
             batch_subtomos = batch[0].to(lightning_model.device)
             model_output = lightning_model(batch_subtomos)
-            model_outputs.append(model_output.detach())
+            model_output = model_output.detach().cpu()
+            model_outputs.append(model_output)
     model_outputs = list(torch.concat(model_outputs, 0))
 
     tomo_ref = reassemble_subtomos(
