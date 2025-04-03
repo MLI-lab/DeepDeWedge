@@ -1,4 +1,7 @@
+import os
 import math
+import shutil
+import time
 
 import pytorch_lightning as pl
 import torch
@@ -174,7 +177,34 @@ class LitUnet3D(pl.LightningModule):
         logger = self.trainer.logger
         logdir = f"{logger.save_dir}/{logger.name}/version_{logger.version}"
         hparams_file = f"{logdir}/hparams.yaml"
-        hparams = yaml.safe_load(open(hparams_file, "r"))
+        if not os.path.exists(hparams_file):
+            print(f"DEBUG: {hparams_file} does not exist. Continuing with empty 'hparams' for now.")
+            hparams = {}
+        else:
+            shutil.copy(hparams_file, f"{logdir}/hparams_bak.yaml")
+            
+            tries = 5
+            success = False
+            
+            for i in range(tries):
+                # "with open" logic is new
+                with open(hparams_file, "r") as f:
+                    hparams = yaml.safe_load(f)
+                if hparams is None:
+                    print(f"DEBUG: {hparams_file} is 'None'. Trying again.")
+                elif hparams == {}:
+                    print(f"DEBUG: {hparams_file} is empty. Trying again.")
+                elif not isinstance(hparams, dict):
+                    print(f"DEBUG: {hparams_file} is not a dictionary but {type(hparams)}. Trying again.")        
+                else:
+                    success = True
+                    break
+                time.sleep(1)  
+                
+            if not success:
+                print(f"DEBUG: {hparams_file} is still 'None' after {tries} attempts. Continuing with empty 'hparams' for now.")
+                hparams = {}
+                    
         hparams[hparam] = value
         with open(hparams_file, "w") as f:
             yaml.dump(hparams, f)
