@@ -51,6 +51,9 @@ To get started with the DeepDeWedge command line interface, we strongly encourag
 ## FAQ
 If you have a question that is not answered here, please do not hesitate to [contact us](mailto:simonw.wiedemann@tum.de).
 
+- **Q: When using my own data, the fitting and/or validation loss is very low or even close to zero. Is this normal? What can I do?**
+A: Low losses can be related to the magnitude of the voxel values and might cause instabilities during model fitting. If you observe very low losses (e.g. `1e-3` to `1e-9`) in the first epoch of model fitting, try normalizing your tomograms such that they have zero mean and unit variance before you run `ddw prepare-data`. 
+
 - **Q: How to speed up the model fitting process?**  
   A: There is a number of things you can try: 
     - **Smaller model:** You can try using a smaller U-Net. While this will reduce the expressiveness of the model, we have found that using a U-Net with 32 channels in the first layer provides similar results to a U-Net with the default 64 channels, but is signficantly faster to train. You can modify the number of channels by adjusting `chans` in the `unet_params_dict` argument.
