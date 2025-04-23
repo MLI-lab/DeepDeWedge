@@ -51,8 +51,8 @@ To get started with the DeepDeWedge command line interface, we strongly encourag
 ## FAQ
 If you have a question that is not answered here, please do not hesitate to [contact us](mailto:simonw.wiedemann@tum.de).
 
-- **Q: When using my own data, the fitting and/or validation loss is very low or even close to zero. Is this normal? What can I do?**
-A: Low losses can be related to the magnitude of the voxel values and might cause instabilities during model fitting. If you observe very low losses (e.g. `1e-3` to `1e-9`) in the first epoch of model fitting, try normalizing your tomograms such that they have zero mean and unit variance before you run `ddw prepare-data`. 
+- **Q: When using my own data, the fitting and/or validation loss is very low or even close to zero. Is this a problem? What should I do about it?**
+  A: Low losses can be due to overall small voxel values in the tomogram and may cause instabilities during model fitting. If you observe very low losses (e.g. `1e-3` to `1e-9`) in the first epoch of model fitting, try normalizing your tomograms such that they have zero mean and unit variance before you run `ddw prepare-data`. 
 
 - **Q: How to speed up the model fitting process?**  
   A: There is a number of things you can try: 
