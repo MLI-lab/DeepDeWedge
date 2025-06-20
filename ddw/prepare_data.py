@@ -78,6 +78,12 @@ def prepare_data(
             help="If True, larger subtomograms with a size of 'subtomo_size*sqrt(2)' will be extracted in order to avoid boundary effects when rotating the subtomograms."
         ),
     ] = True,
+    standardize_full_tomos: Annotated[
+        bool,
+        typer.Option(
+            help="If 'True', the tomo0 and tomo1 tomograms will be standardized (mean=0, std=1) before extracting the subtomograms. This is useful for tomograms with low voxel itensities, and DDW can fail when processing such tomograms wihtout standardization."
+        ),
+    ] = False,
     subtomo_dir: Annotated[
         Optional[Path],
         typer.Option(
@@ -137,6 +143,20 @@ def prepare_data(
         zip(tomo0_files, tomo1_files, mask_files)
     ):
         tomo0 = load_mrc_data(tomo0_file).float()
+        if standardize_full_tomos:
+            print(
+                f"Standardizing tomogram '{tomo0_file}' before extracting sub-tomograms."
+            )
+            tomo0 -= tomo0.mean()
+            tomo0 /= tomo0.std()
+        else:
+            std = tomo0.std()
+            if std < 1e-3:
+                print(f"\
+                    WARNING: Standard deviation of '{tomo0_file}' is low ({std}), which may lead to issues during model fitting!\
+                    \nConsider setting 'standardize_full_tomos=True'.\
+                    \nIf you do so, you must also set 'standardize_full_tomos=True' for 'ddw refine-tomogram'.\
+            ")
         subtomos0, start_coords = extract_subtomos(
             tomo=tomo0,
             subtomo_size=subtomo_size,
@@ -145,6 +165,9 @@ def prepare_data(
             pad_before_subtomo_extraction=pad_before_subtomo_extraction,
         )
         tomo1 = load_mrc_data(tomo1_file).float()
+        if standardize_full_tomos:
+            tomo1 -= tomo1.mean()
+            tomo1 /= tomo1.std()
         subtomos1, _ = extract_subtomos(
             tomo=tomo1,
             subtomo_size=subtomo_size,

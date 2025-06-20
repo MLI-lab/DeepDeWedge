@@ -60,6 +60,12 @@ def refine_tomogram(
             help="Overlap between subtomograms. This determines the stride of the sliding window used to extract subtomograms. If 'None', this is set to '1/3 * subtomo_size'."
         ),
     ] = None,
+    standardize_full_tomos: Annotated[
+        bool,
+        typer.Option(
+            help="Set to 'True' if and only if 'standardize_full_tomos' was 'True' for 'ddw fit-model'."
+        ),
+    ] = False,
     recompute_normalization: Annotated[
         bool,
         typer.Option(
@@ -150,6 +156,7 @@ def refine_tomogram(
                     subtomo_extraction_strides=3 * [subtomo_size - subtomo_overlap],
                     mw_angle=mw_angle,
                     batch_size=batch_size,
+                    standardize=standardize_full_tomos,
                     num_workers=num_workers,
                     verbose=True,
                 )

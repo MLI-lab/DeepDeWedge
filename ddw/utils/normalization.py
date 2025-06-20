@@ -8,7 +8,7 @@ from ddw.prepare_data import prepare_data
 from .subtomo_dataset import SubtomoDataset
 
 
-def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction_strides, mw_angle, batch_size, num_workers, batches=None, verbose=False):
+def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction_strides, standardize, mw_angle, batch_size, num_workers, batches=None, verbose=False):
     """
     Computes the average mean and standard deviation of model-input-type sub-tomograms (with two missing wedges). These values are used to normalize sub-tomograms during model fitting and to normalize full tomograms in the final refinement step. 
     """
@@ -22,6 +22,7 @@ def get_avg_model_input_mean_and_std(tomo_file, subtomo_size, subtomo_extraction
             subtomo_extraction_strides=subtomo_extraction_strides,  
             val_fraction=0.0,
             subtomo_dir=subtomo_dir,
+            standardize_full_tomos=standardize,
             overwrite=True,
             verbose=False,
         )
