@@ -6,7 +6,7 @@ shared:
     - "./tutorial_data/tomo_odd_frames.rec"
   subtomo_size: 96
   mw_angle: 50
-  # standardize_full_tomos: true  # standardizes full tomograms to have zero mean and unit variance; not necessary here but very if your tomograms have low voxel intensities
+  # standardize_full_tomos: true  # not necessary for this tutorial but very useful if your tomograms have low voxel intensities; see "ddw prepare-data --help" for details
   num_workers: 10
   gpu: 0  # you can also set this to a list of GPUs, e.g. [0, 1]. Note: Only fit_model will use multiple GPUs. refine_tomogram will use only one GPU (the first one in the list). 
   # distributed_backend: "nccl"  # which backend PyTorch Lightning uses for distributed training 
